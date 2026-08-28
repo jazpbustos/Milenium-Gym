@@ -1,0 +1,70 @@
+/* ============================================================
+   Milenium Gym — base.css
+   Reset y tipografía de base. Sin fuentes de terceros embebidas
+   acá: los <link> de Google Fonts van en index.html.
+   ============================================================ */
+
+*, *::before, *::after{ box-sizing: border-box; }
+
+html, body{
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+h1, h2, h3, p{ margin: 0; }
+
+button, input, select, textarea{
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+button{
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+button:disabled{ cursor: default; opacity: .5; }
+
+a{ color: var(--naranja); }
+
+/* foco visible siempre — accesibilidad, no solo mouse */
+:focus-visible{
+  outline: 2px solid var(--naranja);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+input:focus-visible, select:focus-visible, textarea:focus-visible{
+  outline: none; /* estos ya marcan foco con el borde, ver components.css */
+}
+
+ul{ margin: 0; padding: 0; list-style: none; }
+
+svg{ display: block; flex: none; }
+
+::selection{ background: var(--naranja-soft); color: var(--text); }
+
+/* scrollbars discretas (webkit) — la app vive en tablets/desktop, no en iOS */
+::-webkit-scrollbar{ width: 10px; height: 10px; }
+::-webkit-scrollbar-track{ background: transparent; }
+::-webkit-scrollbar-thumb{ background: var(--line-strong); border-radius: 20px; }
+::-webkit-scrollbar-thumb:hover{ background: var(--text-faint); }
+
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

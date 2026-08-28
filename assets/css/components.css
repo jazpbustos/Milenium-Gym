@@ -1,0 +1,371 @@
+/* ============================================================
+   Milenium Gym — components.css
+   Piezas reutilizables entre vistas: botones, FAB, badges,
+   tabla, deck, formulario, buscador, toast.
+   ============================================================ */
+
+/* ---------- botones ---------- */
+.btn{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  height: 44px;
+  padding: 0 var(--sp-5);
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: .02em;
+  transition: filter .15s var(--ease), background .15s var(--ease);
+}
+.btn-primary{
+  background: var(--naranja);
+  color: var(--naranja-ink);
+}
+.btn-primary:hover{ filter: brightness(1.08); }
+.btn-ghost{
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--line-strong);
+}
+.btn-ghost:hover{ background: var(--surface-2); color: var(--text); }
+.btn-text{
+  color: var(--naranja);
+  height: auto;
+  padding: var(--sp-2) var(--sp-3);
+}
+.btn-text:hover{ color: var(--text); }
+.btn-danger{
+  background: transparent;
+  color: var(--rojo);
+  border: 1px solid var(--rojo);
+}
+.btn-danger:hover{ background: var(--rojo-soft); }
+.btn-block{ width: 100%; }
+
+/* icon button (topbar, filas de tabla/deck) */
+.icon-btn{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  color: var(--text-dim);
+  flex: none;
+  transition: background .15s var(--ease), color .15s var(--ease);
+}
+.icon-btn svg{ width: 20px; height: 20px; }
+.icon-btn:hover{ background: var(--surface-2); color: var(--text); }
+.icon-btn.is-call:hover{ background: var(--verde-soft); color: var(--verde); }
+.icon-btn.is-whatsapp:hover{ background: var(--verde-soft); color: var(--verde); }
+.icon-btn.is-danger:hover{ background: var(--rojo-soft); color: var(--rojo); }
+
+/* FAB — botón flotante de alta, igual criterio que AppSheet */
+.fab{
+  position: fixed;
+  right: var(--sp-5);
+  bottom: calc(var(--bottomnav-h) + var(--sp-5));
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: var(--naranja);
+  color: var(--naranja-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(224,120,48,.35);
+  z-index: 20;
+  transition: transform .15s var(--ease), filter .15s var(--ease);
+}
+.fab svg{ width: 24px; height: 24px; }
+.fab:hover{ filter: brightness(1.08); transform: translateY(-1px); }
+.fab:active{ transform: scale(.96); }
+
+/* en vistas sin bottomnav (detalle, formulario) el FAB no necesita
+   reservar ese espacio de abajo */
+.fab.fab-standalone{ bottom: var(--sp-5); }
+
+/* ---------- badges de estado ---------- */
+.badge-estado{
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 var(--sp-2);
+  border-radius: 20px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.badge-estado.st-verde   { background: var(--verde-soft);    color: var(--verde); }
+.badge-estado.st-amarillo{ background: var(--amarillo-soft); color: var(--amarillo); }
+.badge-estado.st-rojo    { background: var(--rojo-soft);     color: var(--rojo); }
+
+/* ---------- buscador ---------- */
+.search-bar{
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 44px;
+  padding: 0 var(--sp-3);
+  margin: var(--sp-3) var(--sp-4);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.search-bar svg{ width: 18px; height: 18px; color: var(--text-faint); flex: none; }
+.search-bar input{
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  color: var(--text);
+}
+.search-bar input::placeholder{ color: var(--text-faint); }
+.search-bar .clear-btn{
+  color: var(--text-faint);
+  display: none;
+}
+.search-bar.has-value .clear-btn{ display: flex; }
+
+/* ---------- tabla (vistas MILENIUM GYM / DEUDAS) ---------- */
+.tabla-wrap{ overflow-x: auto; }
+table.tabla{
+  width: 100%;
+  min-width: 480px;
+  border-collapse: collapse;
+}
+table.tabla thead th{
+  position: sticky; top: 0; z-index: 1;
+  background: var(--surface);
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+table.tabla thead th.is-sortable{ cursor: pointer; user-select: none; }
+table.tabla thead th.is-sortable:hover{ color: var(--text); }
+table.tabla thead th .sort-arrow{ margin-left: 4px; opacity: .6; }
+table.tabla tbody tr{
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  transition: background .1s var(--ease);
+}
+table.tabla tbody tr:hover{ background: var(--surface-2); }
+table.tabla tbody td{
+  padding: var(--sp-3) var(--sp-4);
+  font-size: 14px;
+  white-space: nowrap;
+}
+table.tabla tbody td.col-nombre{ font-weight: 500; }
+table.tabla tbody td.col-chevron{ width: 32px; color: var(--text-faint); }
+table.tabla tfoot td{
+  padding: var(--sp-5);
+  text-align: center;
+  color: var(--text-faint);
+  font-size: 13px;
+}
+
+/* ---------- deck (vista ACTIVIDADES) ---------- */
+.deck-row{
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border-bottom: 1px solid var(--line);
+}
+.deck-row-main{ flex: 1; min-width: 0; }
+.deck-row-title{ font-weight: 600; font-size: 15px; margin-bottom: 2px; }
+.deck-row-sub{
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+.deck-row-actions{ display: flex; gap: var(--sp-1); flex: none; }
+
+/* ---------- estado vacío / carga ---------- */
+.estado-vacio{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  padding: var(--sp-10) var(--sp-6);
+  text-align: center;
+  color: var(--text-faint);
+}
+.estado-vacio svg{ width: 40px; height: 40px; opacity: .4; }
+.estado-vacio p{ max-width: 32ch; font-size: 14px; }
+
+.loading-bar{
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--naranja), transparent);
+  background-size: 200% 100%;
+  animation: loading-sweep 1.1s linear infinite;
+}
+@keyframes loading-sweep{
+  from{ background-position: 200% 0; }
+  to{ background-position: -200% 0; }
+}
+
+/* ---------- toast ---------- */
+#toast-root{
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--bottomnav-h) + var(--sp-5));
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  align-items: center;
+  pointer-events: none;
+}
+.toast{
+  background: var(--surface-3);
+  border: 1px solid var(--line-strong);
+  color: var(--text);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--radius);
+  font-size: 13.5px;
+  box-shadow: var(--shadow);
+  animation: toast-in .18s var(--ease);
+}
+.toast.is-error{ border-color: var(--rojo); color: var(--rojo); }
+@keyframes toast-in{
+  from{ opacity: 0; transform: translateY(6px); }
+  to{ opacity: 1; transform: none; }
+}
+
+/* ---------- formulario ---------- */
+.form-field{
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+}
+.form-field label{
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.form-field label .req{ color: var(--naranja); margin-left: 2px; }
+
+.form-field input,
+.form-field select,
+.form-field textarea{
+  height: 46px;
+  padding: 0 var(--sp-3);
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  color: var(--text);
+  transition: border-color .15s var(--ease);
+}
+.form-field input:focus-visible,
+.form-field select:focus-visible,
+.form-field textarea:focus-visible{
+  border-color: var(--naranja);
+}
+.form-field textarea{
+  height: auto;
+  min-height: 80px;
+  padding: var(--sp-3);
+  resize: vertical;
+}
+.form-field select{ appearance: none; }
+.form-field .select-wrap{ position: relative; }
+.form-field .select-wrap svg{
+  position: absolute; right: var(--sp-3); top: 50%;
+  transform: translateY(-50%);
+  width: 16px; height: 16px;
+  color: var(--text-faint);
+  pointer-events: none;
+}
+.form-field .hint{ font-size: 12px; color: var(--text-faint); }
+.form-field .error{ font-size: 12px; color: var(--rojo); }
+.form-field.has-error input,
+.form-field.has-error select{ border-color: var(--rojo); }
+
+/* precio: input de texto con datalist — así no hay steppers de
+   +/- (esos solo existen en type=number) y aun así aparece el
+   valor sugerido como una opción tocable. */
+.precio-field{ position: relative; }
+.precio-field input{ width: 100%; font-variant-numeric: tabular-nums; }
+.precio-field .precio-sugerido{
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--naranja);
+  cursor: pointer;
+  width: fit-content;
+}
+.precio-field .precio-sugerido:hover{ text-decoration: underline; }
+
+.form-actions-bar{
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+}
+.form-actions-bar .btn{ flex: 1; }
+
+/* filas de dos columnas en formulario (pago / crédito) */
+.form-row-2{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+}
+
+/* ---------- vista detalle ---------- */
+.detail-field{
+  padding: var(--sp-4) var(--sp-5);
+  border-bottom: 1px solid var(--line);
+}
+.detail-field-label{
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 4px;
+}
+.detail-field-value{
+  font-size: 17px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+.detail-field-value .value-actions{ display: flex; gap: 2px; flex: none; }
+
+.detail-nav-arrow{
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: rgba(0,0,0,.4);
+  color: var(--text);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 15;
+}
+.detail-nav-arrow:hover{ background: rgba(0,0,0,.6); }
+.detail-nav-arrow.is-prev{ left: var(--sp-3); }
+.detail-nav-arrow.is-next{ right: var(--sp-3); }
+.detail-nav-arrow:disabled{ opacity: .25; }
+
+@media (max-width: 480px){
+  .detail-nav-arrow{ display: none; } /* en mobile se navega con back, no con flechas laterales */
+}

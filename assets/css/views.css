@@ -1,0 +1,93 @@
+/* ============================================================
+   Milenium Gym — views.css
+   Ajustes específicos de vistas puntuales que no valen la pena
+   generalizar como componente.
+   ============================================================ */
+
+/* ---------- ESTADISTICAS ---------- */
+.stats-view{ padding: var(--sp-5); }
+.stats-title{
+  font-family: var(--font-display);
+  font-size: 20px;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  margin-bottom: var(--sp-5);
+}
+.stats-chart-wrap{ overflow-x: auto; }
+.stats-chart{ display: block; }
+.stats-chart .grid-line{ stroke: var(--line); stroke-dasharray: 3 4; }
+.stats-chart .baseline{ stroke: var(--line-strong); }
+.stats-chart .axis-label{
+  fill: var(--text-faint);
+  font-size: 10px;
+  font-family: var(--font-body);
+}
+.stats-chart .bar{ fill: var(--naranja); }
+.stats-chart .bar:hover{ fill: var(--naranja-dark); }
+.stats-chart .bar-value{
+  fill: var(--text-dim);
+  font-size: 10px;
+  font-family: var(--font-mono);
+}
+
+.stats-legend{
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.stats-legend .swatch{
+  width: 12px; height: 12px; border-radius: 3px; background: var(--naranja);
+}
+
+/* ---------- login: mensajes de error ---------- */
+.login-error{
+  color: var(--rojo);
+  font-size: 13.5px;
+  text-align: center;
+  min-height: 18px;
+}
+
+/* ---------- ficha "registrar pago hoy" en el form ---------- */
+.pago-hoy-row{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  margin-bottom: var(--sp-4);
+  background: var(--naranja-soft);
+  border: 1px dashed var(--naranja);
+  border-radius: var(--radius);
+}
+.pago-hoy-row p{ font-size: 13px; color: var(--text-dim); }
+.pago-hoy-row p strong{ color: var(--text); display: block; font-size: 14px; }
+
+/* ---------- confirmación de baja ---------- */
+.confirm-overlay{
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.6);
+  display: flex; align-items: flex-end; justify-content: center;
+  z-index: 40;
+}
+@media (min-width: 640px){
+  .confirm-overlay{ align-items: center; }
+}
+.confirm-card{
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  padding: var(--sp-6) var(--sp-5);
+  box-shadow: var(--shadow);
+}
+@media (min-width: 640px){
+  .confirm-card{ border-radius: var(--radius-lg); }
+}
+.confirm-card h3{ font-size: 17px; margin-bottom: var(--sp-2); }
+.confirm-card p{ font-size: 14px; color: var(--text-dim); margin-bottom: var(--sp-5); }
+.confirm-actions{ display: flex; gap: var(--sp-3); }
+.confirm-actions .btn{ flex: 1; }

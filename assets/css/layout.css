@@ -1,0 +1,148 @@
+/* ============================================================
+   Milenium Gym — layout.css
+   El armazón de la SPA: topbar fija arriba, bottomnav fija abajo,
+   #view-root ocupa el resto y es lo único que el router reemplaza.
+   ============================================================ */
+
+#app{
+  height: 100dvh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ---------- topbar ---------- */
+#topbar{
+  height: var(--topbar-h);
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 0 var(--sp-4);
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.topbar-logo{
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex: none;
+}
+
+.topbar-title{
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 18px;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbar-spacer{ flex: 1; min-width: var(--sp-2); }
+
+.topbar-actions{
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  flex: none;
+}
+
+/* ---------- contenido ---------- */
+#view-root{
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+}
+
+.view{
+  min-height: 100%;
+  animation: view-in .18s var(--ease);
+}
+@keyframes view-in{
+  from{ opacity: 0; transform: translateY(4px); }
+  to{ opacity: 1; transform: none; }
+}
+
+/* ---------- bottom nav ---------- */
+#bottomnav{
+  flex: none;
+  height: var(--bottomnav-h);
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+}
+
+.nav-tab{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--text-faint);
+  transition: background .15s var(--ease), color .15s var(--ease);
+}
+.nav-tab svg{ width: 22px; height: 22px; }
+.nav-tab span{
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.nav-tab.is-active{
+  background: var(--naranja);
+  color: var(--naranja-ink);
+}
+.nav-tab:not(.is-active):hover{
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+/* ---------- login (pantalla completa, sin nav) ---------- */
+.login-screen{
+  height: 100dvh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--sp-6);
+  background:
+    radial-gradient(ellipse at top, rgba(224,120,48,.10), transparent 55%),
+    var(--bg);
+}
+
+.login-logo{
+  width: min(200px, 50vw);
+  margin-bottom: var(--sp-6);
+  filter: drop-shadow(0 6px 18px rgba(0,0,0,.5));
+}
+
+.login-title{
+  font-family: var(--font-display);
+  font-size: clamp(28px, 6vw, 38px);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: var(--sp-8);
+}
+
+.login-form{
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  text-align: left;
+}
+
+@media (min-width: 720px){
+  #topbar{ padding: 0 var(--sp-6); }
+}

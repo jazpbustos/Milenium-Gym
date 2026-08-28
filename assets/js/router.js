@@ -17,6 +17,7 @@ import { renderActividades } from './views/actividades.js';
 import { renderEstadisticas } from './views/estadisticas.js';
 import { renderClienteDetail } from './views/clienteDetail.js';
 import { renderClienteForm } from './views/clienteForm.js';
+import { renderActividadForm } from './views/actividadForm.js';
 
 const viewRoot = document.getElementById('view-root');
 const topbarRoot = document.getElementById('topbar');
@@ -35,6 +36,8 @@ const rutas = [
   { patron: '/cliente/nuevo',        render: renderClienteForm,  tab: null,              nav: false, topbar: true  },
   { patron: '/cliente/:dni',         render: renderClienteDetail,tab: null,              nav: false, topbar: true  },
   { patron: '/cliente/:dni/editar',  render: renderClienteForm,  tab: null,              nav: false, topbar: true  },
+  { patron: '/actividad/nueva',      render: renderActividadForm,tab: null,              nav: false, topbar: true  },
+  { patron: '/actividad/:id/editar', render: renderActividadForm,tab: null,              nav: false, topbar: true  },
 ];
 
 function matchRuta(hash){

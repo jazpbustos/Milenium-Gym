@@ -16,6 +16,10 @@ export const iconos = {
 
   barChart: () => base('<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'),
 
+  lista: () => base('<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>'),
+
+  arrastrar: () => base('<circle cx="9" cy="6" r="1.3" fill="currentColor" stroke="none"/><circle cx="9" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="9" cy="18" r="1.3" fill="currentColor" stroke="none"/><circle cx="15" cy="6" r="1.3" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="15" cy="18" r="1.3" fill="currentColor" stroke="none"/>'),
+
   buscar: () => base('<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>'),
 
   flecha: () => base('<path d="M9 6l6 6-6 6"/>'),

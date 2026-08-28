@@ -12,7 +12,7 @@ export function renderLogin(container){
   container.innerHTML = `
     <div class="login-screen">
       <img class="login-logo" src="assets/img/logomile.jpg" alt="Milenium Centro de Entrenamiento">
-      <p class="login-title">Milenium Gym</p>
+      <p class="login-title">Panel de Gestión</p>
       <form class="login-form" id="login-form" novalidate>
         <div class="form-field">
           <label for="login-email">Email</label>

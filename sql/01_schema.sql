@@ -11,10 +11,20 @@ create table if not exists actividades (
   id      integer generated always as identity primary key,
   nombre  text   not null unique,
   precio  numeric(12,2) not null default 0,
+
+  -- Orden manual, no alfabético: en AppSheet las actividades están
+  -- agrupadas a criterio (variantes de Aparatos, después HIFT
+  -- progresivo, después los COMBOs...), no en orden A-Z. Este
+  -- campo es lo que se edita con "subir/bajar" en la vista
+  -- ACTIVIDADES — ver sql/06_agregar_orden_actividades.sql si ya
+  -- habías corrido este script antes de que orden existiera.
+  orden   integer not null default 0,
+
   creado_en timestamptz not null default now()
 );
 
 comment on table actividades is 'Catálogo de actividades del gimnasio y su precio vigente.';
+comment on column actividades.orden is 'Orden manual de despliegue (deck de ACTIVIDADES y dropdown del formulario de clientes). No es alfabético.';
 
 -- CLIENTES -------------------------------------------------------
 -- Nota sobre tipos: dni y actividad_id son integer, no bigint, a

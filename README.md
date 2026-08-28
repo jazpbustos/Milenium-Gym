@@ -120,6 +120,15 @@ El resto del archivo (cálculo de días, colores, auto-reset) no cambia.
 - **DEUDAS no es una tabla propia**: es `v_clientes` filtrada a `estado < 0`.
 - **No hay historial de pagos ni de asistencias** en esta primera versión — se decidió así para salir más rápido replicando lo que ya existe en AppSheet. El esquema está pensado para que sumar una tabla `pagos` más adelante sea un `create table` nuevo, sin tocar `clientes`.
 
+## Favicon
+
+El ícono de pestaña no es la foto del logo (un wordmark de 512×159 no se lee en 16px) — es una mancuerna generada por `scripts/make_favicon.py` con Pillow, fondo naranja y trazo oscuro, mismo lenguaje visual que el ícono de la pestaña "Milenium Gym" del bottom nav. Si en algún momento cambia el naranja de marca, se regenera con:
+
+```bash
+pip install pillow --break-system-packages
+python3 scripts/make_favicon.py
+```
+
 ## Pendientes conocidos
 
 - Backup: el plan gratuito de Supabase no tiene point-in-time recovery. Conviene un export periódico a CSV hasta que se pase a un plan pago.

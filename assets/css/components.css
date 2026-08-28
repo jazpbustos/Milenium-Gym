@@ -14,7 +14,7 @@
   padding: 0 var(--sp-5);
   border-radius: var(--radius);
   font-weight: 600;
-  font-size: 14px;
+  font-size: 15px;
   letter-spacing: .02em;
   transition: filter .15s var(--ease), background .15s var(--ease);
 }
@@ -42,6 +42,7 @@
 }
 .btn-danger:hover{ background: var(--rojo-soft); }
 .btn-block{ width: 100%; }
+.btn:disabled{ opacity: .4; cursor: not-allowed; filter: none !important; }
 
 /* icon button (topbar, filas de tabla/deck) */
 .icon-btn{
@@ -56,9 +57,14 @@
 }
 .icon-btn svg{ width: 20px; height: 20px; }
 .icon-btn:hover{ background: var(--surface-2); color: var(--text); }
-.icon-btn.is-call:hover{ background: var(--verde-soft); color: var(--verde); }
-.icon-btn.is-whatsapp:hover{ background: var(--verde-soft); color: var(--verde); }
 .icon-btn.is-danger:hover{ background: var(--rojo-soft); color: var(--rojo); }
+
+/* llamar / whatsapp: fondo propio siempre visible (no solo al hover)
+   para que se vean como botones, no como iconos sueltos flotando */
+.icon-btn.is-call,
+.icon-btn.is-whatsapp{ background: var(--verde-soft); color: var(--verde); }
+.icon-btn.is-call:hover,
+.icon-btn.is-whatsapp:hover{ filter: brightness(1.15); }
 
 /* FAB — botón flotante de alta, igual criterio que AppSheet */
 .fab{
@@ -92,7 +98,7 @@
   padding: 0 var(--sp-2);
   border-radius: 20px;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -101,32 +107,39 @@
 .badge-estado.st-amarillo{ background: var(--amarillo-soft); color: var(--amarillo); }
 .badge-estado.st-rojo    { background: var(--rojo-soft);     color: var(--rojo); }
 
-/* ---------- buscador ---------- */
-.search-bar{
+/* ---------- buscador (inline en la topbar) ---------- */
+/* Ocupa el mismo lugar que el título mientras está activo — no es
+   una barra aparte debajo, vive pegado a los íconos de la topbar. */
+.topbar-search{
   display: flex;
   align-items: center;
   gap: var(--sp-2);
-  height: 44px;
+  flex: 0 0 auto;
+  width: 30%;
+  min-width: 130px;
+  margin-left: auto; /* la empuja pegada a los íconos, al lado de la lupa */
+  height: 36px;
   padding: 0 var(--sp-3);
-  margin: var(--sp-3) var(--sp-4);
   background: var(--surface-2);
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius);
 }
-.search-bar svg{ width: 18px; height: 18px; color: var(--text-faint); flex: none; }
-.search-bar input{
+/* el atributo [hidden] tiene que ganarle a "display:flex" de arriba,
+   si no el buscador queda visible siempre en vez de aparecer recién
+   al tocar la lupa */
+.topbar-search[hidden]{ display: none; }
+.topbar-search svg{ width: 16px; height: 16px; color: var(--text-faint); flex: none; }
+.topbar-search input{
   flex: 1;
   min-width: 0;
   background: none;
   border: none;
   color: var(--text);
+  font-size: 15px;
 }
-.search-bar input::placeholder{ color: var(--text-faint); }
-.search-bar .clear-btn{
-  color: var(--text-faint);
-  display: none;
-}
-.search-bar.has-value .clear-btn{ display: flex; }
+.topbar-search input::placeholder{ color: var(--text-faint); }
+.topbar-search .icon-btn{ width: 26px; height: 26px; color: var(--text-faint); flex: none; }
+.topbar-search .icon-btn svg{ width: 15px; height: 15px; }
 
 /* ---------- tabla (vistas MILENIUM GYM / DEUDAS) ---------- */
 .tabla-wrap{ overflow-x: auto; }
@@ -139,7 +152,7 @@ table.tabla thead th{
   position: sticky; top: 0; z-index: 1;
   background: var(--surface);
   text-align: left;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: .06em;
   text-transform: uppercase;
@@ -159,7 +172,7 @@ table.tabla tbody tr{
 table.tabla tbody tr:hover{ background: var(--surface-2); }
 table.tabla tbody td{
   padding: var(--sp-3) var(--sp-4);
-  font-size: 14px;
+  font-size: 15px;
   white-space: nowrap;
 }
 table.tabla tbody td.col-nombre{ font-weight: 500; }
@@ -168,7 +181,7 @@ table.tabla tfoot td{
   padding: var(--sp-5);
   text-align: center;
   color: var(--text-faint);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 /* ---------- deck (vista ACTIVIDADES) ---------- */
@@ -179,11 +192,24 @@ table.tabla tfoot td{
   padding: var(--sp-4);
   border-bottom: 1px solid var(--line);
 }
+.deck-row-drag{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  color: var(--text-faint);
+  cursor: grab;
+  touch-action: none;
+}
+.deck-row-drag svg{ width: 16px; height: 16px; }
+.deck-row.is-dragging{ opacity: .4; }
 .deck-row-main{ flex: 1; min-width: 0; }
-.deck-row-title{ font-weight: 600; font-size: 15px; margin-bottom: 2px; }
+.deck-row-title{ font-weight: 600; font-size: 16px; margin-bottom: 2px; }
 .deck-row-sub{
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-dim);
   font-variant-numeric: tabular-nums;
 }
@@ -201,7 +227,7 @@ table.tabla tfoot td{
   color: var(--text-faint);
 }
 .estado-vacio svg{ width: 40px; height: 40px; opacity: .4; }
-.estado-vacio p{ max-width: 32ch; font-size: 14px; }
+.estado-vacio p{ max-width: 32ch; font-size: 15px; }
 
 .loading-bar{
   height: 2px;
@@ -233,7 +259,7 @@ table.tabla tfoot td{
   color: var(--text);
   padding: var(--sp-3) var(--sp-4);
   border-radius: var(--radius);
-  font-size: 13.5px;
+  font-size: 14.5px;
   box-shadow: var(--shadow);
   animation: toast-in .18s var(--ease);
 }
@@ -244,6 +270,24 @@ table.tabla tfoot td{
 }
 
 /* ---------- formulario ---------- */
+/* En pantallas anchas, los campos estirados de punta a punta se
+   ven desordenados — AppSheet los centra en una columna angosta.
+   Además los campos van dentro de una tarjeta con su propio fondo
+   (--surface, un poco más claro que el negro de la página) para
+   que el formulario se distinga del resto — no todo negro parejo.
+   La barra de Cancelar/Guardar queda fija abajo, pegada al borde
+   de la pantalla, sin importar cuánto contenido tenga el form. */
+.form-shell{ display: flex; flex-direction: column; }
+.form-shell-fields{
+  width: calc(100% - var(--sp-5) * 2);
+  max-width: 640px;
+  margin: var(--sp-4) auto 96px;
+  padding: var(--sp-5);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
 .form-field{
   display: flex;
   flex-direction: column;
@@ -251,7 +295,7 @@ table.tabla tfoot td{
   margin-bottom: var(--sp-4);
 }
 .form-field label{
-  font-size: 11.5px;
+  font-size: 12.5px;
   font-weight: 600;
   letter-spacing: .05em;
   text-transform: uppercase;
@@ -264,7 +308,7 @@ table.tabla tfoot td{
 .form-field textarea{
   height: 46px;
   padding: 0 var(--sp-3);
-  background: var(--surface-2);
+  background: var(--field-bg);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   color: var(--text);
@@ -282,43 +326,162 @@ table.tabla tfoot td{
   resize: vertical;
 }
 .form-field select{ appearance: none; }
-.form-field .select-wrap{ position: relative; }
-.form-field .select-wrap svg{
-  position: absolute; right: var(--sp-3); top: 50%;
-  transform: translateY(-50%);
+
+/* disparador de la actividad: mismo aspecto que un select, pero
+   abre el popup de elección en vez de un <select> nativo. */
+.form-field .select-trigger{
+  height: 46px;
+  width: 100%;
+  padding: 0 var(--sp-3);
+  background: var(--field-bg);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  font-size: 16px;
+  text-align: left;
+  transition: border-color .15s var(--ease);
+}
+.form-field .select-trigger:focus-visible{ border-color: var(--naranja); }
+.form-field .select-trigger .is-placeholder{ color: var(--text-faint); }
+.form-field .select-trigger svg{
   width: 16px; height: 16px;
   color: var(--text-faint);
-  pointer-events: none;
+  flex: none;
 }
-.form-field .hint{ font-size: 12px; color: var(--text-faint); }
-.form-field .error{ font-size: 12px; color: var(--rojo); }
-.form-field.has-error input,
-.form-field.has-error select{ border-color: var(--rojo); }
 
-/* precio: input de texto con datalist — así no hay steppers de
-   +/- (esos solo existen en type=number) y aun así aparece el
-   valor sugerido como una opción tocable. */
+.form-field .hint{ font-size: 13px; color: var(--text-faint); }
+.form-field .error{ font-size: 13px; color: var(--rojo); }
+.form-field.has-error input,
+.form-field.has-error select,
+.form-field.has-error .select-trigger{ border-color: var(--rojo); }
+.form-field.has-error .error{ margin-top: 2px; }
+
+/* precio: input de texto (no number, así no aparecen los steppers
+   +/-). Mientras es una sugerencia sin confirmar (recién
+   autocompletada al elegir la actividad) se ve apagada, del mismo
+   color que un label — hay que clickearla para aceptarla. Ahí pasa
+   a un naranja fuerte y recién entonces se habilita Guardar. */
 .precio-field{ position: relative; }
-.precio-field input{ width: 100%; font-variant-numeric: tabular-nums; }
-.precio-field .precio-sugerido{
-  margin-top: 2px;
-  font-size: 12px;
-  color: var(--naranja);
-  cursor: pointer;
-  width: fit-content;
+/* No es un campo de texto de verdad: es un botón con forma de input.
+   No se tipea ni se selecciona/copia, solo se clickea para confirmar. */
+.precio-field input{
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+  -webkit-user-select: none;
+  caret-color: transparent;
 }
-.precio-field .precio-sugerido:hover{ text-decoration: underline; }
+.precio-field input.is-sugerido{
+  background: var(--field-bg);
+  border-color: var(--line-strong);
+  color: var(--text-dim);
+  text-align: center;
+  font-weight: 600;
+  cursor: pointer;
+}
+.precio-field input.is-confirmado{
+  background: var(--naranja);
+  border-color: var(--naranja);
+  color: var(--naranja-ink);
+  text-align: center;
+  font-weight: 700;
+  cursor: default;
+}
 
 .form-actions-bar{
-  position: sticky;
+  position: fixed;
+  left: 0;
+  right: 0;
   bottom: 0;
   display: flex;
+  justify-content: center;
   gap: var(--sp-3);
   padding: var(--sp-4);
   background: var(--surface);
   border-top: 1px solid var(--line);
+  z-index: 20;
 }
-.form-actions-bar .btn{ flex: 1; }
+.form-actions-bar .btn{ flex: none; width: 148px; }
+@media (max-width: 360px){
+  .form-actions-bar .btn{ width: 128px; }
+}
+
+/* ---------- popup para elegir actividad ---------- */
+/* Ocupa el mismo ancho que la columna del formulario (640px,
+   igual que .form-shell-fields) — no pantalla completa de punta a
+   punta — pero de alto completo, así tapa el form de atrás.
+   Selector compuesto (.confirm-overlay.picker-overlay) para
+   ganarle siempre a las reglas de .confirm-card de views.css, sin
+   importar el orden de los archivos. */
+.confirm-overlay.picker-overlay{
+  background: var(--bg);
+  align-items: stretch;
+  justify-content: center;
+  padding: 0;
+}
+.confirm-card.picker-card{
+  width: 100%;
+  max-width: 640px;
+  height: 100%;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+}
+.picker-card .picker-list{
+  flex: 1;
+  max-height: none;
+}
+.picker-card .confirm-actions{ flex: none; }
+.picker-list{
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: var(--sp-5);
+}
+.picker-item{
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--field-bg);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  text-align: left;
+}
+.picker-item:hover{ border-color: var(--line-strong); }
+.picker-item.is-selected{ border-color: var(--naranja); background: var(--naranja-soft); }
+
+/* circulito tipo radio: dice de un vistazo que es selección
+   única, una sola opción marcada a la vez. */
+.picker-item-radio{
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border-radius: 50%;
+  border: 2px solid var(--line-strong);
+  position: relative;
+}
+.picker-item.is-selected .picker-item-radio{ border-color: var(--naranja); }
+.picker-item.is-selected .picker-item-radio::after{
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--naranja);
+}
+.picker-item-nombre{ flex: 1; font-size: 15.5px; font-weight: 500; }
+.picker-item-precio{
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--text-dim);
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
 
 /* filas de dos columnas en formulario (pago / crédito) */
 .form-row-2{
@@ -326,14 +489,18 @@ table.tabla tfoot td{
   grid-template-columns: 1fr 1fr;
   gap: var(--sp-4);
 }
+@media (max-width: 380px){
+  .form-row-2{ grid-template-columns: 1fr; }
+}
 
 /* ---------- vista detalle ---------- */
+.detail-shell{ max-width: 640px; margin: 0 auto; }
 .detail-field{
   padding: var(--sp-4) var(--sp-5);
   border-bottom: 1px solid var(--line);
 }
 .detail-field-label{
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: .06em;
   text-transform: uppercase;
@@ -341,7 +508,7 @@ table.tabla tfoot td{
   margin-bottom: 4px;
 }
 .detail-field-value{
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 500;
   display: flex;
   align-items: center;

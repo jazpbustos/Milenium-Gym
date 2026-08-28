@@ -9,8 +9,8 @@ import { icon } from './icons.js';
 
 const TABS = [
   { id: 'deudas',       label: 'Deudas',        icono: 'caraTriste', ruta: '/deudas' },
-  { id: 'clientes',     label: 'Milenium Gym',  icono: 'dumbbell',   ruta: '/clientes' },
-  { id: 'actividades',  label: 'Actividades',   icono: 'barChart',   ruta: '/actividades' },
+  { id: 'clientes',     label: 'Socios',        icono: 'dumbbell',   ruta: '/clientes' },
+  { id: 'actividades',  label: 'Actividades',   icono: 'lista',      ruta: '/actividades' },
   { id: 'estadisticas', label: 'Estadísticas',  icono: 'barChart',   ruta: '/estadisticas' },
 ];
 

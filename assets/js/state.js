@@ -12,6 +12,12 @@ const state = {
     dnis: [],
     origen: 'clientes',   // 'clientes' | 'deudores'
   },
+  // Borradores de formularios sin guardar (ver views/clienteForm.js
+  // y views/actividadForm.js). Viven en memoria, sobreviven salir y
+  // volver a entrar a la vista dentro de la misma sesión — pero se
+  // pierden solos con un F5 real, que es justo lo que se busca: no
+  // borrar nada por navegar, solo al refrescar la página de verdad.
+  borradores: {},
 };
 
 const listeners = new Set();
@@ -32,4 +38,20 @@ export function subscribe(fn){
 
 export function getActividadById(id){
   return state.actividades.find((a) => a.id === id) || null;
+}
+
+// --- Borradores de formularios ---------------------------------
+export function guardarBorrador(clave, valores){
+  setState({ borradores: { ...state.borradores, [clave]: valores } });
+}
+
+export function obtenerBorrador(clave){
+  return state.borradores[clave] || null;
+}
+
+export function borrarBorrador(clave){
+  if (!(clave in state.borradores)) return;
+  const copia = { ...state.borradores };
+  delete copia[clave];
+  setState({ borradores: copia });
 }

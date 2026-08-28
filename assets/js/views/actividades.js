@@ -2,13 +2,15 @@
 // Milenium Gym — views/actividades.js
 // Vista "ACTIVIDADES": deck de nombre + precio, con editar/borrar
 // inline y alta por FAB — igual forma que la vista homónima en
-// AppSheet. Esta tabla es la que alimenta la sugerencia de precio
-// del formulario de clientes.
+// AppSheet. El orden es manual: se arrastra la fila (icono de la
+// izquierda) para reordenar, y el nuevo orden se guarda solo.
+// Esta tabla es la que alimenta la sugerencia de precio del
+// formulario de clientes.
 // ============================================================
 
-import { listarActividades, crearActividad, actualizarActividad, eliminarActividad } from '../api/actividades.js';
+import { listarActividades, eliminarActividad, guardarOrdenActividades } from '../api/actividades.js';
 import { icon } from '../components/icons.js';
-import { formatearPrecio, precioParaInput } from '../utils/formato.js';
+import { formatearPrecio } from '../utils/formato.js';
 import { mostrarError, mostrarToast } from '../utils/toast.js';
 import { pedirConfirmacion } from '../utils/confirm.js';
 import { cerrarSesion } from '../auth.js';
@@ -30,7 +32,7 @@ export async function renderActividades(container, params, { renderTopbar }){
   `;
   const host = container.querySelector('#deck-host');
 
-  container.querySelector('#fab-nueva').addEventListener('click', () => abrirModal(null));
+  container.querySelector('#fab-nueva').addEventListener('click', () => navegarA('/actividad/nueva'));
 
   async function cargar(){
     host.innerHTML = '<div class="loading-bar"></div>';
@@ -50,7 +52,8 @@ export async function renderActividades(container, params, { renderTopbar }){
       return;
     }
     host.innerHTML = actividades.map((a) => `
-      <div class="deck-row" data-id="${a.id}">
+      <div class="deck-row" draggable="true" data-id="${a.id}">
+        <div class="deck-row-drag" title="Arrastrar para reordenar">${icon('arrastrar')}</div>
         <div class="deck-row-main">
           <p class="deck-row-title">${escapeHtml(a.nombre)}</p>
           <p class="deck-row-sub">${formatearPrecio(a.precio)}</p>
@@ -64,7 +67,8 @@ export async function renderActividades(container, params, { renderTopbar }){
 
     host.querySelectorAll('.deck-row').forEach((row) => {
       const a = actividades.find((x) => x.id === Number(row.dataset.id));
-      row.querySelector('.btn-editar').addEventListener('click', () => abrirModal(a));
+
+      row.querySelector('.btn-editar').addEventListener('click', () => navegarA(`/actividad/${a.id}/editar`));
       row.querySelector('.btn-borrar').addEventListener('click', async () => {
         const ok = await pedirConfirmacion({
           titulo: 'Borrar actividad',
@@ -79,48 +83,48 @@ export async function renderActividades(container, params, { renderTopbar }){
         } catch (err) { mostrarError(err); }
       });
     });
+
+    activarArrastre(host, actividades);
   }
 
-  function abrirModal(actividad){
-    const esEdicion = !!actividad;
-    const overlay = document.createElement('div');
-    overlay.className = 'confirm-overlay';
-    overlay.innerHTML = `
-      <div class="confirm-card">
-        <h3>${esEdicion ? 'Editar actividad' : 'Nueva actividad'}</h3>
-        <div class="form-field">
-          <label for="m-nombre">Nombre<span class="req">*</span></label>
-          <input id="m-nombre" type="text" value="${esEdicion ? escapeAttr(actividad.nombre) : ''}" required>
-        </div>
-        <div class="form-field">
-          <label for="m-precio">Precio<span class="req">*</span></label>
-          <input id="m-precio" type="text" inputmode="decimal" value="${esEdicion ? precioParaInput(actividad.precio) : ''}" required>
-        </div>
-        <div class="confirm-actions">
-          <button type="button" class="btn btn-ghost" id="m-cancelar">Cancelar</button>
-          <button type="button" class="btn btn-primary" id="m-guardar">Guardar</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(overlay);
+  // --- Reordenar por drag & drop --------------------------------
+  // Se arrastra la fila entera desde el ícono de la izquierda. Al
+  // soltar, se lee el orden final del DOM y se guarda de una — nada
+  // de moverla de a un lugar por vez con botones.
+  function activarArrastre(host, actividadesActuales){
+    let filaArrastrada = null;
 
-    const cerrar = () => overlay.remove();
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) cerrar(); });
-    overlay.querySelector('#m-cancelar').addEventListener('click', cerrar);
-    overlay.querySelector('#m-guardar').addEventListener('click', async () => {
-      const nombre = overlay.querySelector('#m-nombre').value.trim();
-      const precio = Number(overlay.querySelector('#m-precio').value);
-      if (!nombre || !overlay.querySelector('#m-precio').value){
-        mostrarToast('Completá nombre y precio.', { error: true });
-        return;
-      }
+    host.querySelectorAll('.deck-row').forEach((row) => {
+      row.addEventListener('dragstart', () => {
+        filaArrastrada = row;
+        row.classList.add('is-dragging');
+      });
+      row.addEventListener('dragend', () => {
+        row.classList.remove('is-dragging');
+        filaArrastrada = null;
+      });
+      row.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        if (!filaArrastrada || filaArrastrada === row) return;
+        const rect = row.getBoundingClientRect();
+        const antesDeEsta = (e.clientY - rect.top) < rect.height / 2;
+        host.insertBefore(filaArrastrada, antesDeEsta ? row : row.nextSibling);
+      });
+    });
+
+    host.addEventListener('dragover', (e) => e.preventDefault());
+    host.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      if (!filaArrastrada) return;
+      const idsEnOrden = [...host.querySelectorAll('.deck-row')].map((r) => Number(r.dataset.id));
       try {
-        if (esEdicion) await actualizarActividad(actividad.id, { nombre, precio });
-        else await crearActividad({ nombre, precio });
-        mostrarToast(esEdicion ? 'Actividad actualizada.' : 'Actividad creada.');
-        cerrar();
-        cargar();
-      } catch (err) { mostrarError(err); }
+        await guardarOrdenActividades(idsEnOrden);
+        const reordenadas = idsEnOrden.map((id) => actividadesActuales.find((a) => a.id === id));
+        setState({ actividades: reordenadas });
+      } catch (err) {
+        mostrarError(err);
+        cargar(); // si falló al guardar, se vuelve a traer el orden real
+      }
     });
   }
 
@@ -131,7 +135,4 @@ function escapeHtml(str){
   const d = document.createElement('div');
   d.textContent = str ?? '';
   return d.innerHTML;
-}
-function escapeAttr(str){
-  return escapeHtml(str).replace(/"/g, '&quot;');
 }

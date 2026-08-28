@@ -2,23 +2,34 @@
 // Milenium Gym — views/clienteForm.js
 // Alta y edición de clientes en un solo formulario. El corazón
 // de esta vista es el campo PRECIO: se autocompleta como sugerencia
-// al elegir ACTIVIDAD (sin fórmula que lo trabe), y dejar de
-// sugerir en cuanto la persona lo toca — igual que en AppSheet.
+// al elegir ACTIVIDAD, siempre formateado como plata ($42.000). No
+// es un campo de texto — es un botón: no se tipea, no se selecciona,
+// un solo click lo confirma (naranja fuerte) y recién ahí se habilita
+// Guardar. Elegir una actividad distinta vuelve a poner el precio
+// como sugerencia sin confirmar.
+//
+// Lo cargado se guarda como borrador en el state (ver state.js)
+// mientras se completa el form: si la persona sale de la vista y
+// vuelve sin guardar, lo recupera tal cual lo dejó. El borrador
+// solo se borra al guardar o al cancelar explícitamente — no se
+// pierde por navegar, y como vive en memoria, un F5 real sí lo
+// limpia (eso es lo esperado).
 // ============================================================
 
 import { listarActividades } from '../api/actividades.js';
-import { obtenerCliente, crearCliente, actualizarCliente, registrarPagoHoy } from '../api/clientes.js';
+import { obtenerCliente, crearCliente, actualizarCliente } from '../api/clientes.js';
 import { icon } from '../components/icons.js';
+import { elegirActividad } from '../components/pickerActividad.js';
 import { mostrarError, mostrarToast } from '../utils/toast.js';
-import { sugerirE164, esE164Valido } from '../utils/telefono.js';
-import { hoyISO, precioParaInput } from '../utils/formato.js';
-import { getState, setState } from '../state.js';
+import { hoyISO, formatearPrecio } from '../utils/formato.js';
+import { soloDigitos, soloTexto, soloTelefono, marcarError, limpiarErrores } from '../utils/validacion.js';
+import { getState, setState, guardarBorrador, obtenerBorrador, borrarBorrador } from '../state.js';
 import { navegarA } from '../router.js';
-import { DIAS_CREDITO_DEFAULT } from '../config.js';
 
 export async function renderClienteForm(container, params, { renderTopbar }){
   const dniEdicion = params.dni ? Number(params.dni) : null;
   const esEdicion = dniEdicion !== null;
+  const clave = esEdicion ? `cliente-editar-${dniEdicion}` : 'cliente-nuevo';
 
   renderTopbar({
     title: esEdicion ? 'Editar cliente' : 'Nuevo cliente',
@@ -64,70 +75,74 @@ export async function renderClienteForm(container, params, { renderTopbar }){
     }
   }
 
+  const borrador = obtenerBorrador(clave);
+
+  const actividadDesdeBorrador = borrador?.actividadId
+    ? actividades.find((a) => String(a.id) === borrador.actividadId)
+    : null;
+  const actividadInicial = actividadDesdeBorrador
+    || (esEdicion ? actividades.find((a) => a.id === cliente.actividad_id) : null);
+
+  // Borrador > dato guardado > default — en ese orden de prioridad.
+  const valores = {
+    dni: borrador?.dni ?? (esEdicion ? String(cliente.dni) : ''),
+    nombre: borrador?.nombre ?? (esEdicion ? cliente.nombre : ''),
+    telefono: borrador?.telefono ?? (esEdicion ? (cliente.telefono || '') : ''),
+    precio: borrador?.precio ?? (esEdicion ? formatearPrecio(cliente.precio) : ''),
+    comentarios: borrador?.comentarios ?? (esEdicion ? (cliente.comentarios || '') : ''),
+    fechaPago: borrador?.fechaPago ?? (esEdicion ? (cliente.fecha_pago || '') : hoyISO()),
+    diasCredito: borrador?.diasCredito ?? (esEdicion ? String(cliente.dias_credito ?? '') : ''),
+  };
+
   container.innerHTML = `
-    <form id="cliente-form" novalidate style="padding-bottom:8px;">
-      <div style="padding:0 20px;">
+    <form id="cliente-form" novalidate class="form-shell">
+      <div class="form-shell-fields">
 
         <div class="form-field">
           <label for="f-dni">DNI<span class="req">*</span></label>
-          <input id="f-dni" type="text" inputmode="numeric" pattern="[0-9]*"
-            value="${esEdicion ? cliente.dni : ''}" ${esEdicion ? 'disabled' : ''} required>
+          <input id="f-dni" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="10" autocomplete="off"
+            value="${esEdicion ? cliente.dni : escapeAttr(valores.dni)}" ${esEdicion ? 'disabled' : ''} required>
           ${esEdicion ? '<p class="hint">El DNI no se puede modificar. Si está mal, dalo de baja y cargá el cliente de nuevo.</p>' : ''}
         </div>
 
         <div class="form-field">
           <label for="f-nombre">Nombre<span class="req">*</span></label>
-          <input id="f-nombre" type="text" value="${esEdicion ? escapeAttr(cliente.nombre) : ''}" required>
+          <input id="f-nombre" type="text" autocomplete="off" value="${escapeAttr(valores.nombre)}" required>
         </div>
 
         <div class="form-field">
-          <label for="f-telefono">Teléfono</label>
-          <input id="f-telefono" type="tel" placeholder="011 15 1234-5678" value="${esEdicion ? escapeAttr(cliente.telefono || '') : ''}">
-          <p class="hint" id="f-telefono-hint"></p>
+          <label for="f-telefono">Teléfono<span class="req">*</span></label>
+          <input id="f-telefono" type="tel" autocomplete="off" value="${escapeAttr(valores.telefono)}" required>
         </div>
 
         <div class="form-field">
-          <label for="f-actividad">Actividad<span class="req">*</span></label>
-          <div class="select-wrap">
-            <select id="f-actividad" required>
-              <option value="" disabled ${!esEdicion ? 'selected' : ''}>Elegí una actividad</option>
-              ${actividades.map((a) => `
-                <option value="${a.id}" data-precio="${a.precio}" ${esEdicion && a.id === cliente.actividad_id ? 'selected' : ''}>
-                  ${escapeHtml(a.nombre)}
-                </option>`).join('')}
-            </select>
+          <label for="f-actividad-trigger">Actividad<span class="req">*</span></label>
+          <button type="button" class="select-trigger" id="f-actividad-trigger">
+            <span id="f-actividad-trigger-label" class="${actividadInicial ? '' : 'is-placeholder'}">${actividadInicial ? escapeHtml(actividadInicial.nombre) : 'Elegí una actividad'}</span>
             ${icon('chevronDown')}
-          </div>
+          </button>
+          <input type="hidden" id="f-actividad" value="${actividadInicial ? actividadInicial.id : ''}" required>
         </div>
 
         <div class="form-field precio-field">
           <label for="f-precio">Precio<span class="req">*</span></label>
-          <input id="f-precio" type="text" inputmode="decimal"
-            value="${esEdicion ? precioParaInput(cliente.precio) : ''}" required>
-          <p class="precio-sugerido" id="f-precio-sugerido" style="display:none;"></p>
+          <input id="f-precio" type="text" readonly tabindex="-1" autocomplete="off" value="${escapeAttr(valores.precio)}" required>
         </div>
 
         <div class="form-field">
           <label for="f-comentarios">Comentarios</label>
-          <textarea id="f-comentarios">${esEdicion ? escapeHtml(cliente.comentarios || '') : ''}</textarea>
+          <input id="f-comentarios" type="text" autocomplete="off" value="${escapeAttr(valores.comentarios)}">
         </div>
-
-        ${esEdicion ? `
-          <div class="pago-hoy-row">
-            <p>¿Pagó hoy? <strong>Actualiza la fecha de pago al día de hoy.</strong></p>
-            <button type="button" class="btn btn-ghost" id="btn-pago-hoy">Registrar pago</button>
-          </div>
-        ` : ''}
 
         <div class="form-row-2">
           <div class="form-field">
-            <label for="f-fecha-pago">Fecha de pago</label>
-            <input id="f-fecha-pago" type="date" value="${esEdicion ? (cliente.fecha_pago || '') : hoyISO()}">
+            <label for="f-fecha-pago">Fecha de pago<span class="req">*</span></label>
+            <input id="f-fecha-pago" type="date" value="${escapeAttr(valores.fechaPago)}" required>
           </div>
           <div class="form-field">
-            <label for="f-dias-credito">Días de crédito</label>
-            <input id="f-dias-credito" type="number" min="0" step="1"
-              value="${esEdicion ? cliente.dias_credito : DIAS_CREDITO_DEFAULT}">
+            <label for="f-dias-credito">Días de crédito<span class="req">*</span></label>
+            <input id="f-dias-credito" type="number" min="0" step="1" placeholder="Ej: 30"
+              value="${escapeAttr(valores.diasCredito)}" required>
           </div>
         </div>
 
@@ -141,105 +156,138 @@ export async function renderClienteForm(container, params, { renderTopbar }){
   `;
 
   const form = container.querySelector('#cliente-form');
-  const selActividad = container.querySelector('#f-actividad');
+  const inpDni = container.querySelector('#f-dni');
+  const inpNombre = container.querySelector('#f-nombre');
+  const inpActividad = container.querySelector('#f-actividad');
+  const triggerActividad = container.querySelector('#f-actividad-trigger');
+  const triggerActividadLabel = container.querySelector('#f-actividad-trigger-label');
   const inpPrecio = container.querySelector('#f-precio');
-  const precioSugeridoEl = container.querySelector('#f-precio-sugerido');
   const inpTelefono = container.querySelector('#f-telefono');
-  const telefonoHint = container.querySelector('#f-telefono-hint');
+  const inpComentarios = container.querySelector('#f-comentarios');
+  const inpFechaPago = container.querySelector('#f-fecha-pago');
+  const inpDiasCredito = container.querySelector('#f-dias-credito');
   const btnGuardar = container.querySelector('#btn-guardar');
 
-  // --- Precio sugerido: el corazón de la spec original ---------
-  // Sin "tocado", el precio sigue a la actividad elegida. En
-  // cuanto la persona escribe algo en el campo, deja de pisarse:
-  // así un precio pactado no se borra solo al tocar la actividad.
-  function mostrarSugerencia(actividad){
-    if (!actividad) { precioSugeridoEl.style.display = 'none'; return; }
-    precioSugeridoEl.textContent = `Sugerido para ${actividad.nombre}: $${Number(actividad.precio).toLocaleString('es-AR')} — tocá para usarlo`;
-    precioSugeridoEl.style.display = 'block';
-  }
+  let actividadElegida = actividadInicial || null;
 
-  selActividad.addEventListener('change', () => {
-    const opt = selActividad.selectedOptions[0];
-    const precio = opt?.dataset.precio;
-    const actividad = actividades.find((a) => String(a.id) === selActividad.value);
-    if (!inpPrecio.dataset.tocado && precio !== undefined){
-      inpPrecio.value = precioParaInput(precio);
-    }
-    mostrarSugerencia(actividad);
-  });
-
-  precioSugeridoEl.addEventListener('click', () => {
-    const actividad = actividades.find((a) => String(a.id) === selActividad.value);
-    if (!actividad) return;
-    inpPrecio.value = precioParaInput(actividad.precio);
-    delete inpPrecio.dataset.tocado;
-    precioSugeridoEl.style.display = 'none';
-  });
-
-  inpPrecio.addEventListener('input', () => {
-    inpPrecio.dataset.tocado = '1';
-    precioSugeridoEl.style.display = 'none';
-  });
-
-  // Si ya viene una actividad seleccionada (modo edición), no se
-  // dispara 'change' solo por eso — perfecto: no debe pisar el
-  // precio pactado que ya tiene el cliente.
-
-  // --- Teléfono: normaliza a E.164 al salir del campo, visible
-  // y editable — igual criterio que el precio: se sugiere, no se
-  // impone en silencio. Ver utils/telefono.js.
-  inpTelefono.addEventListener('blur', () => {
-    const val = inpTelefono.value.trim();
-    if (!val) { telefonoHint.textContent = ''; return; }
-    if (esE164Valido(val)) { telefonoHint.textContent = ''; return; }
-    const sugerido = sugerirE164(val);
-    inpTelefono.value = sugerido;
-    telefonoHint.textContent = 'Formato ajustado — revisá que el número quedó bien.';
-  });
-
-  // --- Registrar pago hoy ---------------------------------------
-  const btnPagoHoy = container.querySelector('#btn-pago-hoy');
-  if (btnPagoHoy){
-    btnPagoHoy.addEventListener('click', async () => {
-      btnPagoHoy.disabled = true;
-      try {
-        await registrarPagoHoy(dniEdicion);
-        container.querySelector('#f-fecha-pago').value = hoyISO();
-        mostrarToast('Pago registrado con la fecha de hoy.');
-      } catch (err) {
-        mostrarError(err);
-      } finally {
-        btnPagoHoy.disabled = false;
-      }
+  // --- Borrador: se guarda en cada cambio, se borra al guardar o
+  // al cancelar. Así, salir de la vista y volver no pierde nada.
+  function guardarBorradorActual(){
+    guardarBorrador(clave, {
+      dni: esEdicion ? '' : inpDni.value,
+      nombre: inpNombre.value,
+      telefono: inpTelefono.value,
+      actividadId: inpActividad.value,
+      precio: inpPrecio.value,
+      comentarios: inpComentarios.value,
+      fechaPago: inpFechaPago.value,
+      diasCredito: inpDiasCredito.value,
     });
   }
+  form.addEventListener('input', guardarBorradorActual);
+
+  // --- Saneo de campos mientras se tipea ------------------------
+  inpDni.addEventListener('input', () => { inpDni.value = soloDigitos(inpDni.value).slice(0, 10); });
+  inpNombre.addEventListener('input', () => { inpNombre.value = soloTexto(inpNombre.value); });
+  inpTelefono.addEventListener('input', () => { inpTelefono.value = soloTelefono(inpTelefono.value); });
+
+  // --- Precio: no es un campo de texto, es un botón -------------
+  // Al elegir actividad aparece la sugerencia con pinta de label,
+  // apagada y centrada — no se tipea ni se selecciona, un solo click
+  // la confirma y ahí se pone naranja fuerte y recién ahí se habilita
+  // Guardar. Siempre arranca sin marcar (aunque ya traiga un valor
+  // cargado, de un cliente existente o de un borrador): hay que
+  // clickearla para poder guardar. Formateada como plata ($42.000)
+  // siempre, en los dos estados.
+  function marcarPrecioSugerido(){
+    inpPrecio.classList.remove('is-confirmado');
+    inpPrecio.classList.add('is-sugerido');
+    btnGuardar.disabled = true;
+  }
+  function marcarPrecioConfirmado(){
+    inpPrecio.classList.remove('is-sugerido');
+    inpPrecio.classList.add('is-confirmado');
+    btnGuardar.disabled = false;
+  }
+
+  if (inpPrecio.value) marcarPrecioSugerido();
+
+  function aplicarActividad(actividad){
+    const cambioDeActividad = !actividadElegida || !actividad || actividadElegida.id !== actividad.id;
+    actividadElegida = actividad;
+    inpActividad.value = actividad ? actividad.id : '';
+    triggerActividadLabel.textContent = actividad ? actividad.nombre : 'Elegí una actividad';
+    triggerActividadLabel.classList.toggle('is-placeholder', !actividad);
+    if (actividad && cambioDeActividad){
+      inpPrecio.value = formatearPrecio(actividad.precio); // "$42.000"
+      marcarPrecioSugerido();
+    }
+    guardarBorradorActual(); // el hidden y el precio no disparan 'input' solos
+  }
+
+  triggerActividad.addEventListener('click', async () => {
+    const elegida = await elegirActividad(actividades, actividadElegida?.id ?? null);
+    if (elegida) aplicarActividad(elegida);
+  });
+
+  // Un solo click confirma. El campo es readonly y no seleccionable
+  // (ver components.css), así que no hay nada más que pueda pasar:
+  // clicks de más, una vez confirmado, no hacen nada.
+  inpPrecio.addEventListener('click', () => {
+    if (!inpPrecio.classList.contains('is-sugerido')) return;
+    marcarPrecioConfirmado();
+    inpPrecio.blur();
+    guardarBorradorActual();
+  });
 
   container.querySelector('#btn-cancelar').addEventListener('click', () => {
+    borrarBorrador(clave);
     navegarA(esEdicion ? `/cliente/${dniEdicion}` : '/clientes');
   });
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    limpiarErrores(container);
 
-    const dni = esEdicion ? dniEdicion : Number(container.querySelector('#f-dni').value);
-    const nombre = container.querySelector('#f-nombre').value.trim();
-    const actividadId = Number(selActividad.value) || null;
-    const precio = Number(inpPrecio.value);
+    const dni = esEdicion ? dniEdicion : Number(inpDni.value);
+    const nombre = inpNombre.value.trim();
+    const telefono = inpTelefono.value.trim();
+    const actividadId = Number(inpActividad.value) || null;
+    // El precio siempre se muestra formateado como plata ("$42.000")
+    // — se limpia antes de mandarlo a Supabase.
+    const precio = Number(inpPrecio.value.replace(/[^0-9]/g, ''));
+    const fechaPago = inpFechaPago.value;
+    const diasCredito = inpDiasCredito.value;
 
-    if (!dni || !nombre || !actividadId || !inpPrecio.value){
-      mostrarToast('Completá DNI, nombre, actividad y precio.', { error: true });
+    let huboError = false;
+    const marcar = (el, msg) => { marcarError(el, msg); huboError = true; };
+
+    if (!esEdicion){
+      const dniLimpio = inpDni.value.trim();
+      if (!dniLimpio) marcar(inpDni, 'El DNI es obligatorio.');
+      else if (!/^[0-9]{1,10}$/.test(dniLimpio)) marcar(inpDni, 'Solo números, hasta 10 dígitos.');
+    }
+    if (!nombre) marcar(inpNombre, 'El nombre es obligatorio.');
+    if (!telefono) marcar(inpTelefono, 'El teléfono es obligatorio.');
+    if (!actividadId) marcar(triggerActividad, 'Elegí una actividad.');
+    if (!inpPrecio.value || !(precio > 0)) marcar(inpPrecio, 'El precio es obligatorio.');
+    if (!fechaPago) marcar(inpFechaPago, 'La fecha de pago es obligatoria.');
+    if (!diasCredito) marcar(inpDiasCredito, 'Los días de crédito son obligatorios.');
+
+    if (huboError){
+      mostrarToast('Revisá los campos marcados en rojo.', { error: true });
       return;
     }
 
     const payload = {
       dni,
       nombre,
-      telefono: inpTelefono.value.trim() || null,
+      telefono,
       actividad_id: actividadId,
       precio,
-      comentarios: container.querySelector('#f-comentarios').value.trim() || null,
-      fecha_pago: container.querySelector('#f-fecha-pago').value || null,
-      dias_credito: Number(container.querySelector('#f-dias-credito').value) || 0,
+      comentarios: inpComentarios.value.trim() || null,
+      fecha_pago: fechaPago,
+      dias_credito: Number(diasCredito),
     };
 
     btnGuardar.disabled = true;
@@ -252,6 +300,7 @@ export async function renderClienteForm(container, params, { renderTopbar }){
         await crearCliente(payload);
         mostrarToast('Cliente creado.');
       }
+      borrarBorrador(clave);
       setState({ clientes: [] }); // fuerza recarga de la lista con datos frescos
       navegarA(`/cliente/${dni}`);
     } catch (err) {

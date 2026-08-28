@@ -72,6 +72,7 @@ export async function renderClienteDetail(container, params, { renderTopbar }){
     ${prevDni ? `<button type="button" class="detail-nav-arrow is-prev" title="Anterior">${icon('flechaIzq')}</button>` : ''}
     ${nextDni ? `<button type="button" class="detail-nav-arrow is-next" title="Siguiente">${icon('flecha')}</button>` : ''}
 
+    <div class="detail-shell">
     <div class="detail-field">
       <p class="detail-field-label">DNI</p>
       <p class="detail-field-value">${cliente.dni.toLocaleString('es-AR')}</p>
@@ -125,6 +126,7 @@ export async function renderClienteDetail(container, params, { renderTopbar }){
     </div>
 
     <div style="height:88px;"></div>
+    </div>
 
     <button type="button" class="fab fab-standalone" id="fab-editar" title="Editar">${icon('lapiz')}</button>
   `;

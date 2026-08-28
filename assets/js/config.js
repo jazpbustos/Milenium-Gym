@@ -6,12 +6,10 @@
 // esconder esta clave) — igual, nunca pongas acá la service_role.
 // ============================================================
 
-export const SUPABASE_URL = 'https://TU-PROYECTO.supabase.co';
-export const SUPABASE_ANON_KEY = 'TU-ANON-KEY';
+export const SUPABASE_URL = 'https://tadipuhbehztxscijyki.supabase.co';
+export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRhZGlwdWhiZWh6dHhzY2lqeWtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5MzAyMzcsImV4cCI6MjEwMzUwNjIzN30.kwUxYsiV28fBTdm-2Kjjv5AT-_yOLOnarQU3K_giK4c';
 
 // Mismo umbral que usa Check-in-Milenium (assets/js/script.js,
 // UMBRAL_POR_VENCER_DIAS) para que un socio no vea un color en la
 // tablet y otro en la gestión.
 export const UMBRAL_POR_VENCER_DIAS = 3;
-
-export const DIAS_CREDITO_DEFAULT = 30;

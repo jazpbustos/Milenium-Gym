@@ -10,8 +10,9 @@
   /* --- superficies (estética AppSheet: negro real, no gris) --- */
   --bg:            #0a0a0a;
   --surface:       #141210;   /* topbar, bottomnav, cards, filas de tabla */
-  --surface-2:     #1b1815;   /* hover / fila alternada / inputs */
+  --surface-2:     #1b1815;   /* hover / fila alternada */
   --surface-3:     #221e19;   /* hover sobre surface-2 */
+  --field-bg:      #1d1d1d;   /* fondo de inputs/selects de formulario — gris neutro, igual que AppSheet */
   --line:          #2a2420;   /* separadores */
   --line-strong:   #3a332c;
 

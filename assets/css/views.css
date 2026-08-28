@@ -8,7 +8,7 @@
 .stats-view{ padding: var(--sp-5); }
 .stats-title{
   font-family: var(--font-display);
-  font-size: 20px;
+  font-size: 21px;
   letter-spacing: .5px;
   text-transform: uppercase;
   margin-bottom: var(--sp-5);
@@ -19,14 +19,14 @@
 .stats-chart .baseline{ stroke: var(--line-strong); }
 .stats-chart .axis-label{
   fill: var(--text-faint);
-  font-size: 10px;
+  font-size: 11px;
   font-family: var(--font-body);
 }
 .stats-chart .bar{ fill: var(--naranja); }
 .stats-chart .bar:hover{ fill: var(--naranja-dark); }
 .stats-chart .bar-value{
   fill: var(--text-dim);
-  font-size: 10px;
+  font-size: 11px;
   font-family: var(--font-mono);
 }
 
@@ -35,7 +35,7 @@
   align-items: center;
   gap: var(--sp-2);
   margin-bottom: var(--sp-4);
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-dim);
 }
 .stats-legend .swatch{
@@ -45,25 +45,10 @@
 /* ---------- login: mensajes de error ---------- */
 .login-error{
   color: var(--rojo);
-  font-size: 13.5px;
+  font-size: 14.5px;
   text-align: center;
   min-height: 18px;
 }
-
-/* ---------- ficha "registrar pago hoy" en el form ---------- */
-.pago-hoy-row{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-3);
-  padding: var(--sp-3);
-  margin-bottom: var(--sp-4);
-  background: var(--naranja-soft);
-  border: 1px dashed var(--naranja);
-  border-radius: var(--radius);
-}
-.pago-hoy-row p{ font-size: 13px; color: var(--text-dim); }
-.pago-hoy-row p strong{ color: var(--text); display: block; font-size: 14px; }
 
 /* ---------- confirmación de baja ---------- */
 .confirm-overlay{
@@ -87,7 +72,7 @@
 @media (min-width: 640px){
   .confirm-card{ border-radius: var(--radius-lg); }
 }
-.confirm-card h3{ font-size: 17px; margin-bottom: var(--sp-2); }
-.confirm-card p{ font-size: 14px; color: var(--text-dim); margin-bottom: var(--sp-5); }
+.confirm-card h3{ font-size: 18px; margin-bottom: var(--sp-2); }
+.confirm-card p{ font-size: 15px; color: var(--text-dim); margin-bottom: var(--sp-5); }
 .confirm-actions{ display: flex; gap: var(--sp-3); }
 .confirm-actions .btn{ flex: 1; }

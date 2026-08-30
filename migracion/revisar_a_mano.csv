@@ -1,10 +1,3 @@
-DNI;NOMBRE;TELEFONO;ACTIVIDAD;PRECIO;COMENTARIOS;FECHA DE PAGO;DIAS DE CREDITO;MOTIVO
-1;Pascua Nicolás;3735502456;Aparatos;$40.000,00;;18/08/2026;30;DNI parece un valor de prueba / placeholder (muy corto)
-3333;Alfonsina Tschieder;3496509294;HIFT X5;$42.600,00;;10/06/2026;30;DNI parece un valor de prueba / placeholder (muy corto)
-3496564084;Chemes martina;3496564084;Aparatos dos veces por semana;$28.000,00;;10/11/2025;30;el DNI es igual al teléfono (parece un error de carga)
-11;exner vanina;3496544607;HIFT X5;$20.500,00;;10/03/2025;30;DNI parece un valor de prueba / placeholder (muy corto)
-4;Lucena Maria Guadalupe;;HIFT X5;$17.500,00;Medio mes;05/11/2024;30;DNI parece un valor de prueba / placeholder (muy corto)
-5;Percara Juan Agustín;3456536270;3 semanas aparatos;$14.500,00;;05/11/2024;21;DNI parece un valor de prueba / placeholder (muy corto)
-3;Rivalta Agustín;;Medio mes aparatos;$9.000,00;;17/09/2024;15;DNI parece un valor de prueba / placeholder (muy corto)
-0;Ayala Catalina;3562522444;Aparatos;$15.000,00;;05/08/2024;30;DNI parece un valor de prueba / placeholder (muy corto)
-;;;;;;23/06/2024;30;sin DNI
+﻿FILA;MOTIVO;DNI;NOMBRE;TELEFONO;ACTIVIDAD
+538;"DNI fuera de rango; parece un teléfono";3496564084;Chemes martina;3496564084;Aparatos dos veces por semana
+1328;Sin DNI;;;;

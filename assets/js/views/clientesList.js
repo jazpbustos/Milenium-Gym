@@ -44,9 +44,9 @@ export async function renderClientesList(container, params, { renderTopbar }){
     <div class="filter-bar" role="group" aria-label="Filtrar socios por estado">
       ${[
         ['todos', 'Todos'],
-        ['al-dia', 'Al día'],
+        ['al-dia', 'Activos'],
         ['por-vencer', 'Por vencer'],
-        ['deuda', 'Con deuda'],
+        ['deuda', 'Vencidos'],
       ].map(([valor, label]) => `
         <button type="button" class="filter-chip${filtroEstado === valor ? ' is-active' : ''}" data-estado="${valor}">${label}</button>
       `).join('')}

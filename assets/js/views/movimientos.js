@@ -2,11 +2,12 @@
 // las deudas siguen disponibles como filtro dentro de Socios.
 
 import { listarPagos } from '../api/pagos.js';
-import { formatearFecha, formatearPrecio, hoyISO } from '../utils/formato.js';
+import { formatearFecha, formatearPrecio } from '../utils/formato.js';
 import { mostrarError } from '../utils/toast.js';
 import { cerrarSesion } from '../auth.js';
 import { getState, setState } from '../state.js';
 import { navegarA } from '../router.js';
+import { MOVIMIENTOS_DESDE } from '../config.js';
 
 const PERIODOS = [
   ['hoy', 'Hoy'],
@@ -15,15 +16,19 @@ const PERIODOS = [
   ['todos', 'Todos'],
 ];
 
-function fechaDesde(periodo){
-  const hoy = new Date(`${hoyISO()}T00:00:00`);
-  if (periodo === 'hoy') return hoyISO();
+function creacionDesde(periodo){
+  const ahora = new Date();
+  const inicioHoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+  const inicioHistorial = new Date(`${MOVIMIENTOS_DESDE}T00:00:00`);
+  let desde = inicioHistorial;
+  if (periodo === 'hoy') desde = inicioHoy;
   if (periodo === '7dias'){
-    hoy.setDate(hoy.getDate() - 6);
-    return hoy.toISOString().slice(0, 10);
+    inicioHoy.setDate(inicioHoy.getDate() - 6);
+    desde = inicioHoy;
   }
-  if (periodo === 'mes') return `${hoyISO().slice(0, 7)}-01`;
-  return null;
+  if (periodo === 'mes') desde = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
+  // Ningún filtro puede retroceder antes del inicio operativo.
+  return new Date(Math.max(desde.getTime(), inicioHistorial.getTime())).toISOString();
 }
 
 export async function renderMovimientos(container, params, { renderTopbar }){
@@ -100,7 +105,7 @@ export async function renderMovimientos(container, params, { renderTopbar }){
   async function cargar(){
     host.innerHTML = '<div class="loading-bar"></div>';
     try {
-      pagos = await listarPagos({ desde: fechaDesde(periodo) });
+      pagos = await listarPagos({ creadoDesde: creacionDesde(periodo) });
       pintar();
     } catch (err) {
       mostrarError(err);

@@ -1,6 +1,7 @@
 -- Historial de pagos. Correr una sola vez después de 06.
--- Conserva el último pago importado de cada socio como movimiento inicial
--- y, desde entonces, registra automáticamente cada cambio de fecha_pago.
+-- Registra los pagos nuevos desde que se instala el historial. No crea
+-- movimientos iniciales desde clientes.fecha_pago porque no conocemos el
+-- verdadero momento en que esos cobros históricos fueron recibidos.
 
 create table if not exists pagos (
   id                bigint generated always as identity primary key,
@@ -25,14 +26,6 @@ create policy "pagos: lectura autenticada"
   on pagos for select to authenticated using (true);
 create policy "pagos: alta autenticada"
   on pagos for insert to authenticated with check (true);
-
--- Punto de partida: no inventa pagos anteriores; guarda solamente el
--- último pago que existía en clientes al momento de ejecutar la migración.
-insert into pagos (cliente_dni, actividad_id, fecha_pago, importe, dias_credito)
-select c.dni, c.actividad_id, c.fecha_pago, c.precio, c.dias_credito
-from clientes c
-where c.fecha_pago is not null
-  and not exists (select 1 from pagos p where p.cliente_dni = c.dni);
 
 create or replace function registrar_movimiento_pago()
 returns trigger

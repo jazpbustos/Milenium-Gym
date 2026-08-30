@@ -13,3 +13,8 @@ export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // UMBRAL_POR_VENCER_DIAS) para que un socio no vea un color en la
 // tablet y otro en la gestión.
 export const UMBRAL_POR_VENCER_DIAS = 3;
+
+// Inicio operativo del historial real. Los movimientos anteriores fueron
+// creados en bloque durante la migración y no representan cobros cargados
+// cronológicamente en la aplicación.
+export const MOVIMIENTOS_DESDE = '2026-08-30';

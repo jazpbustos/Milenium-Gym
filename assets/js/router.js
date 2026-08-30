@@ -12,7 +12,7 @@ import { renderBottomnav } from './components/bottomnav.js';
 
 import { renderLogin } from './views/login.js';
 import { renderClientesList } from './views/clientesList.js';
-import { renderDeudasList } from './views/deudasList.js';
+import { renderMovimientos } from './views/movimientos.js';
 import { renderActividades } from './views/actividades.js';
 import { renderEstadisticas } from './views/estadisticas.js';
 import { renderClienteDetail } from './views/clienteDetail.js';
@@ -30,7 +30,7 @@ let cleanupActual = null;
 const rutas = [
   { patron: '/login',                render: renderLogin,        tab: null,             nav: false, topbar: false },
   { patron: '/clientes',             render: renderClientesList, tab: 'clientes',        nav: true,  topbar: true  },
-  { patron: '/deudas',               render: renderDeudasList,   tab: 'deudas',          nav: true,  topbar: true  },
+  { patron: '/movimientos',          render: renderMovimientos,  tab: 'movimientos',     nav: true,  topbar: true  },
   { patron: '/actividades',          render: renderActividades,  tab: 'actividades',     nav: true,  topbar: true  },
   { patron: '/estadisticas',         render: renderEstadisticas, tab: 'estadisticas',    nav: true,  topbar: true  },
   { patron: '/cliente/nuevo',        render: renderClienteForm,  tab: null,              nav: false, topbar: true  },

@@ -141,6 +141,43 @@
 .topbar-search .icon-btn{ width: 26px; height: 26px; color: var(--text-faint); flex: none; }
 .topbar-search .icon-btn svg{ width: 15px; height: 15px; }
 
+/* ---------- filtros rápidos ---------- */
+.filter-bar{
+  display: flex;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  overflow-x: auto;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+}
+.filter-chip{
+  flex: none;
+  height: 34px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--line-strong);
+  border-radius: 18px;
+  color: var(--text-dim);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.filter-chip:hover{ color: var(--text); background: var(--surface-2); }
+.filter-chip.is-active{
+  border-color: var(--naranja);
+  background: var(--naranja);
+  color: var(--naranja-ink);
+}
+
+.movimientos-resumen{
+  display: flex;
+  gap: var(--sp-4);
+  align-items: baseline;
+  padding: var(--sp-3) var(--sp-4);
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--line);
+}
+.movimientos-resumen strong{ color: var(--text); font-size: 18px; }
+
 /* ---------- tabla (vistas MILENIUM GYM / DEUDAS) ---------- */
 .tabla-wrap{ overflow-x: auto; }
 table.tabla{

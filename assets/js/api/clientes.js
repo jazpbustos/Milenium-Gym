@@ -1,6 +1,6 @@
 // ============================================================
 // Milenium Gym — api/clientes.js
-// Lecturas contra las vistas (v_clientes / v_deudores, donde
+// Lecturas contra v_clientes (donde
 // ESTADO ya viene calculado) y escrituras contra la tabla
 // clientes. Las vistas nunca llaman a supabase directo.
 // ============================================================
@@ -36,12 +36,6 @@ export async function listarClientes(){
     .eq('activo', true)
     .order('nombre', { ascending: true })
     .order('dni', { ascending: true })); // desempate estable entre nombres iguales, para que la paginación no repita ni salte filas
-}
-
-export async function listarDeudores(){
-  return listarPaginado('v_deudores', (q) => q
-    .order('estado', { ascending: true }) // más vencidos primero
-    .order('dni', { ascending: true }));
 }
 
 export async function obtenerCliente(dni){

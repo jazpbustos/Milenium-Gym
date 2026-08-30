@@ -20,7 +20,7 @@ import { navegarA } from '../router.js';
 export async function renderClienteDetail(container, params, { renderTopbar }){
   const dni = Number(params.dni);
   const { listContext } = getState();
-  const origenRuta = listContext.origen === 'deudores' ? '/deudas' : '/clientes';
+  const origenRuta = listContext.origen === 'movimientos' ? '/movimientos' : '/clientes';
 
   renderTopbar({
     title: 'Detalle',

@@ -10,7 +10,7 @@ const state = {
   clientes: [],          // cache de v_clientes (se refresca al entrar a cada vista)
   listContext: {          // para las flechas prev/next del detalle
     dnis: [],
-    origen: 'clientes',   // 'clientes' | 'deudores'
+    origen: 'clientes',   // 'clientes' | 'movimientos'
   },
   // Borradores de formularios sin guardar (ver views/clienteForm.js
   // y views/actividadForm.js). Viven en memoria, sobreviven salir y
@@ -27,7 +27,12 @@ const state = {
   // Ahora quedan acá, sobreviven navegar y solo un F5 real los
   // limpia (ver router.js/auth.js).
   filtroClientes: '',
+  estadoClientes: 'todos', // todos | al-dia | por-vencer | deuda
   ordenClientes: { campo: 'nombre', dir: 1 },
+
+  // Preferencias de la pantalla de movimientos.
+  filtroMovimientos: '',
+  periodoMovimientos: 'hoy', // hoy | 7dias | mes | todos
 };
 
 const listeners = new Set();

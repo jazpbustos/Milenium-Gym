@@ -1,6 +1,6 @@
 # Milenium Gym — Gestión
 
-App de gestión de clientes para **Milenium Centro de Entrenamiento**. Reemplaza a la app de AppSheet: mismo flujo (MILENIUM GYM / DEUDAS / ACTIVIDADES / ESTADISTICAS), mismo criterio de ESTADO, con Supabase como base y HTML/CSS/JS plano — sin build, sin framework.
+App de gestión de clientes para **Milenium Centro de Entrenamiento**. Incluye socios, historial de movimientos, actividades y estadísticas, con Supabase como base y HTML/CSS/JS plano — sin build, sin framework.
 
 Comparte base de datos con [Check-in-Milenium](../Check-in-Milenium): las dos apps leen y escriben la misma fuente en Supabase, así que un pago cargado acá se ve al instante en la tablet de la entrada.
 
@@ -20,24 +20,26 @@ assets/
     config.js          → URL y anon key de Supabase, constantes compartidas
     supabaseClient.js  → instancia única del cliente
     auth.js             → login / logout / sesión
-    state.js            → store mínimo (sesión, cache de clientes/actividades)
+    state.js            → store mínimo (sesión, cache y filtros)
     router.js            → ruteo por hash, sin librería
     main.js               → arranque
     api/
       clientes.js       → toda la lectura/escritura de CLIENTES
+      pagos.js          → lectura del historial de PAGOS
       actividades.js    → toda la lectura/escritura de ACTIVIDADES
       estadisticas.js   → conteo de clientes por actividad
     components/
       topbar.js, bottomnav.js, icons.js, tablaClientes.js
     views/
-      login.js, clientesList.js, deudasList.js, clienteDetail.js,
+      login.js, clientesList.js, movimientos.js, clienteDetail.js,
       clienteForm.js, actividades.js, estadisticas.js
     utils/
       formato.js (fechas/precio/estado), telefono.js, whatsapp.js,
       toast.js, confirm.js
 sql/
   01_schema.sql, 02_vistas.sql, 03_rls.sql, 04_rpc_checkin.sql,
-  05_seed_actividades.sql   → correr en ese orden, una sola vez
+  05_seed_actividades.sql, 06_agregar_orden_actividades.sql,
+  07_historial_pagos.sql    → correr en ese orden, una sola vez
 ```
 
 Ninguna vista llama a Supabase directo: siempre pasa por `api/`. Así, el día que quieras cambiar de backend, tocás dos archivos y no quince.
@@ -56,7 +58,9 @@ En [supabase.com](https://supabase.com), creá un proyecto nuevo (plan gratuito 
 2. `02_vistas.sql` — vistas calculadas (ESTADO, DEUDORES, estadísticas)
 3. `03_rls.sql` — seguridad: sin esto, cualquiera con la URL del proyecto podría leer o escribir todo
 4. `04_rpc_checkin.sql` — la función que va a usar el check-in de la tablet
-5. `05_seed_actividades.sql` (opcional) — carga algunas actividades de ejemplo tomadas de tu AppSheet actual. Completá el resto a mano o desde la pestaña Actividades de esta misma app.
+5. `05_seed_actividades.sql` (opcional) — carga actividades de ejemplo
+6. `06_agregar_orden_actividades.sql` — agrega el orden manual si la base ya existía
+7. `07_historial_pagos.sql` — crea el historial y registra automáticamente los pagos nuevos
 
 ### 3. Crear los usuarios
 
@@ -117,8 +121,8 @@ El resto del archivo (cálculo de días, colores, auto-reset) no cambia.
 - **El precio se guarda en cada cliente**, no se recalcula solo contra `actividades.precio`. Al elegir la actividad en el formulario, el precio se autocompleta como sugerencia (`views/clienteForm.js`); en cuanto tocás el campo, deja de pisarse. Así un precio pactado con un socio no se borra si después le cambiás la actividad.
 - **ESTADO no es una columna**: se calcula en `v_clientes` contra la fecha de hoy en cada consulta (`sql/02_vistas.sql`). Guardarlo como columna lo dejaría congelado en la fecha en que se escribió.
 - **Baja lógica, no DELETE**: dar de baja a un cliente pone `activo = false`, no borra la fila. Reactivar a alguien es un `update` directo en Supabase si hace falta.
-- **DEUDAS no es una tabla propia**: es `v_clientes` filtrada a `estado < 0`.
-- **No hay historial de pagos ni de asistencias** en esta primera versión — se decidió así para salir más rápido replicando lo que ya existe en AppSheet. El esquema está pensado para que sumar una tabla `pagos` más adelante sea un `create table` nuevo, sin tocar `clientes`.
+- **Las deudas se consultan dentro de Socios**: el filtro `Con deuda` muestra `estado < 0`, y la tabla conserva el orden ascendente/descendente habitual.
+- **Los pagos tienen historial propio**: `pagos` conserva importe, actividad, crédito y vencimiento de cada movimiento. `clientes.fecha_pago` sigue guardando el último pago para que ESTADO y el check-in sean rápidos.
 
 ## Favicon
 

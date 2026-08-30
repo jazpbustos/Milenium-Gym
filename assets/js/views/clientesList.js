@@ -12,12 +12,14 @@ import { mostrarError } from '../utils/toast.js';
 import { cerrarSesion } from '../auth.js';
 import { setState, getState } from '../state.js';
 import { navegarA } from '../router.js';
+import { UMBRAL_POR_VENCER_DIAS } from '../config.js';
 
 export async function renderClientesList(container, params, { renderTopbar }){
   // El texto buscado vive en el state global (ver state.js), no acá
   // — así, si la persona sale de esta vista y vuelve, lo encuentra
   // tal cual lo dejó en vez de arrancar de cero cada vez.
   let textoBusqueda = getState().filtroClientes;
+  let filtroEstado = getState().estadoClientes;
 
   renderTopbar({
     title: 'Socios',
@@ -39,6 +41,16 @@ export async function renderClientesList(container, params, { renderTopbar }){
   const yaHabiaDatos = getState().clientes.length > 0;
 
   container.innerHTML = `
+    <div class="filter-bar" role="group" aria-label="Filtrar socios por estado">
+      ${[
+        ['todos', 'Todos'],
+        ['al-dia', 'Al día'],
+        ['por-vencer', 'Por vencer'],
+        ['deuda', 'Con deuda'],
+      ].map(([valor, label]) => `
+        <button type="button" class="filter-chip${filtroEstado === valor ? ' is-active' : ''}" data-estado="${valor}">${label}</button>
+      `).join('')}
+    </div>
     <div id="tabla-host">
       ${yaHabiaDatos ? '' : '<div class="loading-bar"></div>'}
     </div>
@@ -50,12 +62,29 @@ export async function renderClientesList(container, params, { renderTopbar }){
   function aplicarFiltro(texto){
     const { clientes } = getState();
     const q = texto.trim().toLowerCase();
-    const filtrados = !q
+    const porTexto = !q
       ? clientes
       : clientes.filter((c) =>
           c.nombre.toLowerCase().includes(q) || String(c.dni).includes(q));
+    const filtrados = porTexto.filter((c) => {
+      if (filtroEstado === 'deuda') return c.estado < 0;
+      if (filtroEstado === 'por-vencer') return c.estado >= 0 && c.estado <= UMBRAL_POR_VENCER_DIAS;
+      if (filtroEstado === 'al-dia') return c.estado > UMBRAL_POR_VENCER_DIAS;
+      return true;
+    });
     renderTablaClientes(tablaHost, filtrados, { origen: 'clientes' });
   }
+
+  container.querySelectorAll('.filter-chip').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      filtroEstado = btn.dataset.estado;
+      setState({ estadoClientes: filtroEstado });
+      container.querySelectorAll('.filter-chip').forEach((chip) => {
+        chip.classList.toggle('is-active', chip === btn);
+      });
+      aplicarFiltro(textoBusqueda);
+    });
+  });
 
   container.querySelector('#fab-nuevo').addEventListener('click', () => navegarA('/cliente/nuevo'));
 

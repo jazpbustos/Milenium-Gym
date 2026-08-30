@@ -14,6 +14,8 @@ export const iconos = {
 
   caraTriste: () => base('<circle cx="12" cy="12" r="9"/><path d="M9 10h.01M15 10h.01M8.5 16c1-1.3 2.2-2 3.5-2s2.5.7 3.5 2"/>'),
 
+  movimientos: () => base('<path d="M4 7h16M4 12h16M4 17h10"/><path d="M17 15l3 2-3 2"/>'),
+
   barChart: () => base('<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'),
 
   lista: () => base('<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>'),

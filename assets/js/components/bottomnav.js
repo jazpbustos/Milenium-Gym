@@ -1,14 +1,12 @@
 // ============================================================
 // Milenium Gym — components/bottomnav.js
-// Los mismos 4 tabs que la app de AppSheet (DEUDAS, MILENIUM GYM,
-// ACTIVIDADES, ESTADISTICAS), mismos íconos, con el naranja del
-// gimnasio en vez del amarillo de AppSheet para marcar el activo.
+// Navegación principal de la gestión.
 // ============================================================
 
 import { icon } from './icons.js';
 
 const TABS = [
-  { id: 'deudas',       label: 'Deudas',        icono: 'caraTriste', ruta: '/deudas' },
+  { id: 'movimientos',  label: 'Movimientos',   icono: 'movimientos', ruta: '/movimientos' },
   { id: 'clientes',     label: 'Socios',        icono: 'dumbbell',   ruta: '/clientes' },
   { id: 'actividades',  label: 'Actividades',   icono: 'lista',      ruta: '/actividades' },
   { id: 'estadisticas', label: 'Estadísticas',  icono: 'barChart',   ruta: '/estadisticas' },

@@ -1,0 +1,118 @@
+// Últimos pagos registrados. Reemplaza la antigua pestaña Deudas;
+// las deudas siguen disponibles como filtro dentro de Socios.
+
+import { listarPagos } from '../api/pagos.js';
+import { formatearFecha, formatearPrecio, hoyISO } from '../utils/formato.js';
+import { mostrarError } from '../utils/toast.js';
+import { cerrarSesion } from '../auth.js';
+import { getState, setState } from '../state.js';
+import { navegarA } from '../router.js';
+
+const PERIODOS = [
+  ['hoy', 'Hoy'],
+  ['7dias', 'Últimos 7 días'],
+  ['mes', 'Este mes'],
+  ['todos', 'Todos'],
+];
+
+function fechaDesde(periodo){
+  const hoy = new Date(`${hoyISO()}T00:00:00`);
+  if (periodo === 'hoy') return hoyISO();
+  if (periodo === '7dias'){
+    hoy.setDate(hoy.getDate() - 6);
+    return hoy.toISOString().slice(0, 10);
+  }
+  if (periodo === 'mes') return `${hoyISO().slice(0, 7)}-01`;
+  return null;
+}
+
+export async function renderMovimientos(container, params, { renderTopbar }){
+  let texto = getState().filtroMovimientos;
+  let periodo = getState().periodoMovimientos;
+  let pagos = [];
+
+  renderTopbar({
+    title: 'Movimientos',
+    buscador: {
+      placeholder: 'Buscar por socio o DNI...',
+      valorInicial: texto,
+      onBuscar: (valor) => {
+        texto = valor;
+        setState({ filtroMovimientos: valor });
+        pintar();
+      },
+    },
+    actions: [
+      { icono: 'refrescar', titulo: 'Actualizar', onClick: () => cargar() },
+      { icono: 'salir', titulo: 'Cerrar sesión', onClick: async () => { await cerrarSesion(); navegarA('/login'); } },
+    ],
+  });
+
+  container.innerHTML = `
+    <div class="filter-bar" role="group" aria-label="Período de movimientos">
+      ${PERIODOS.map(([valor, label]) => `<button type="button" class="filter-chip${periodo === valor ? ' is-active' : ''}" data-periodo="${valor}">${label}</button>`).join('')}
+    </div>
+    <div id="movimientos-host"><div class="loading-bar"></div></div>
+  `;
+  const host = container.querySelector('#movimientos-host');
+
+  container.querySelectorAll('.filter-chip').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      periodo = btn.dataset.periodo;
+      setState({ periodoMovimientos: periodo });
+      container.querySelectorAll('.filter-chip').forEach((chip) => chip.classList.toggle('is-active', chip === btn));
+      cargar();
+    });
+  });
+
+  function pintar(){
+    const q = texto.trim().toLowerCase();
+    const visibles = q
+      ? pagos.filter((p) => p.cliente.toLowerCase().includes(q) || String(p.cliente_dni).includes(q))
+      : pagos;
+    const total = visibles.reduce((suma, p) => suma + Number(p.importe), 0);
+
+    if (!visibles.length){
+      host.innerHTML = `<div class="estado-vacio"><p>No hay movimientos para mostrar.</p></div>`;
+      return;
+    }
+
+    setState({ listContext: { dnis: visibles.map((p) => p.cliente_dni), origen: 'movimientos' } });
+    host.innerHTML = `
+      <div class="movimientos-resumen"><strong>${visibles.length} pago${visibles.length === 1 ? '' : 's'}</strong><span>${formatearPrecio(total)}</span></div>
+      <div class="tabla-wrap">
+        <table class="tabla">
+          <thead><tr><th>Fecha</th><th>Socio</th><th>Actividad</th><th>Importe</th><th>Nuevo vencimiento</th></tr></thead>
+          <tbody>${visibles.map((p) => `
+            <tr data-dni="${p.cliente_dni}">
+              <td>${formatearFecha(p.fecha_pago)}</td>
+              <td class="col-nombre">${escapeHtml(p.cliente)}</td>
+              <td>${escapeHtml(p.actividad)}</td>
+              <td>${formatearPrecio(p.importe)}</td>
+              <td>${formatearFecha(p.nuevo_vencimiento)}</td>
+            </tr>`).join('')}</tbody>
+        </table>
+      </div>`;
+
+    host.querySelectorAll('tbody tr').forEach((tr) => tr.addEventListener('click', () => navegarA(`/cliente/${tr.dataset.dni}`)));
+  }
+
+  async function cargar(){
+    host.innerHTML = '<div class="loading-bar"></div>';
+    try {
+      pagos = await listarPagos({ desde: fechaDesde(periodo) });
+      pintar();
+    } catch (err) {
+      mostrarError(err);
+      host.innerHTML = `<div class="estado-vacio"><p>No se pudo cargar el historial de pagos.</p></div>`;
+    }
+  }
+
+  await cargar();
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str ?? '';
+  return d.innerHTML;
+}

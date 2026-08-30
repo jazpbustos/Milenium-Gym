@@ -1,8 +1,6 @@
 // ============================================================
 // Milenium Gym — components/tablaClientes.js
-// Tabla compartida entre MILENIUM GYM y DEUDAS (misma forma de
-// fila en ambas vistas de AppSheet: DNI, NOMBRE, ESTADO). Vive
-// acá una sola vez para no mantener dos tablas casi idénticas.
+// Tabla de socios: DNI, NOMBRE y ESTADO.
 //
 // Encabezados clickeables para ordenar (asc/desc) por DNI, Nombre
 // o Estado. El orden elegido se guarda en el state global
@@ -31,8 +29,8 @@ function comparar(a, b, campo){
 
 /**
  * @param {HTMLElement} container
- * @param {Array} clientes  filas de v_clientes / v_deudores
- * @param {{ origen: 'clientes' | 'deudores' }} opts
+ * @param {Array} clientes filas de v_clientes
+ * @param {{ origen: 'clientes' }} opts
  */
 export function renderTablaClientes(container, clientes, { origen }){
   // Se guardan las filas tal cual llegaron (ya filtradas por el

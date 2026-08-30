@@ -73,13 +73,10 @@ export async function renderClienteDetail(container, params, { renderTopbar }){
     ${nextDni ? `<button type="button" class="detail-nav-arrow is-next" title="Siguiente">${icon('flecha')}</button>` : ''}
 
     <div class="detail-shell">
+    <p class="detail-nombre">${escapeHtml(cliente.nombre)}</p>
     <div class="detail-field">
       <p class="detail-field-label">DNI</p>
       <p class="detail-field-value">${cliente.dni.toLocaleString('es-AR')}</p>
-    </div>
-    <div class="detail-field">
-      <p class="detail-field-label">Nombre</p>
-      <p class="detail-field-value">${escapeHtml(cliente.nombre)}</p>
     </div>
     <div class="detail-field">
       <p class="detail-field-label">Teléfono</p>

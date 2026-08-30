@@ -28,13 +28,19 @@ export function renderTopbar(root, opts){
     ? `<button type="button" class="icon-btn" id="tb-back" title="Volver">${icon('volver')}</button>`
     : `<img class="topbar-logo" src="assets/img/logomile.jpg" alt="">`;
 
+  // Si ya venía con texto buscado (se guarda en el state global para
+  // sobrevivir salir y volver a entrar a la vista), el buscador
+  // arranca abierto de una en vez de esconder el filtro activo atrás
+  // del título.
+  const haciaAbierto = !!buscador?.valorInicial;
+
   root.innerHTML = `
     ${izquierda}
-    <p class="topbar-title" id="tb-title">${title}</p>
+    <p class="topbar-title" id="tb-title" ${haciaAbierto ? 'hidden' : ''}>${title}</p>
     ${buscador ? `
-      <div class="topbar-search" id="tb-search" hidden>
+      <div class="topbar-search" id="tb-search" ${haciaAbierto ? '' : 'hidden'}>
         ${icon('buscar')}
-        <input type="text" id="tb-search-input" autocomplete="off" placeholder="${buscador.placeholder || 'Buscar...'}">
+        <input type="text" id="tb-search-input" autocomplete="off" placeholder="${buscador.placeholder || 'Buscar...'}" value="${escapeAttr(buscador.valorInicial || '')}">
         <button type="button" class="icon-btn" id="tb-search-clear" title="Limpiar">${icon('cerrar')}</button>
       </div>
     ` : ''}
@@ -82,4 +88,10 @@ export function renderTopbar(root, opts){
       searchInput.focus();
     });
   }
+}
+
+function escapeAttr(str){
+  const d = document.createElement('div');
+  d.textContent = str ?? '';
+  return d.innerHTML.replace(/"/g, '&quot;');
 }

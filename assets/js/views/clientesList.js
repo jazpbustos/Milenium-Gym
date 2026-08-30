@@ -14,13 +14,17 @@ import { setState, getState } from '../state.js';
 import { navegarA } from '../router.js';
 
 export async function renderClientesList(container, params, { renderTopbar }){
-  let textoBusqueda = '';
+  // El texto buscado vive en el state global (ver state.js), no acá
+  // — así, si la persona sale de esta vista y vuelve, lo encuentra
+  // tal cual lo dejó en vez de arrancar de cero cada vez.
+  let textoBusqueda = getState().filtroClientes;
 
   renderTopbar({
     title: 'Socios',
     buscador: {
       placeholder: 'Buscar por nombre o DNI...',
-      onBuscar: (texto) => { textoBusqueda = texto; aplicarFiltro(texto); },
+      valorInicial: textoBusqueda,
+      onBuscar: (texto) => { textoBusqueda = texto; setState({ filtroClientes: texto }); aplicarFiltro(texto); },
     },
     actions: [
       { icono: 'refrescar', titulo: 'Actualizar', onClick: () => cargar(true) },
@@ -28,9 +32,15 @@ export async function renderClientesList(container, params, { renderTopbar }){
     ],
   });
 
+  // Si ya había clientes cargados (venimos de navegar, no de un F5),
+  // se pinta la tabla directo con lo que ya está en memoria — nada
+  // de mostrar el loading-bar y "refrescar" de nuevo contra la red
+  // solo por haber cambiado de pestaña y vuelto.
+  const yaHabiaDatos = getState().clientes.length > 0;
+
   container.innerHTML = `
     <div id="tabla-host">
-      <div class="loading-bar"></div>
+      ${yaHabiaDatos ? '' : '<div class="loading-bar"></div>'}
     </div>
     <button type="button" class="fab" id="fab-nuevo" title="Nuevo cliente">${icon('mas')}</button>
   `;

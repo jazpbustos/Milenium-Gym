@@ -3,11 +3,31 @@
 // Tabla compartida entre MILENIUM GYM y DEUDAS (misma forma de
 // fila en ambas vistas de AppSheet: DNI, NOMBRE, ESTADO). Vive
 // acá una sola vez para no mantener dos tablas casi idénticas.
+//
+// Encabezados clickeables para ordenar (asc/desc) por DNI, Nombre
+// o Estado. El orden elegido se guarda en el state global
+// (state.ordenClientes), no en el elemento contenedor — el
+// contenedor se recrea entero cada vez que el router vuelve a
+// montar la vista, así que guardar el orden ahí se perdía apenas
+// se salía y volvía a entrar a Socios.
 // ============================================================
 
 import { claseEstado } from '../utils/formato.js';
 import { icon } from './icons.js';
-import { setState } from '../state.js';
+import { setState, getState } from '../state.js';
+
+const COLUMNAS = [
+  { campo: 'dni', label: 'DNI' },
+  { campo: 'nombre', label: 'Nombre' },
+  { campo: 'estado', label: 'Estado' },
+];
+
+function comparar(a, b, campo){
+  if (campo === 'nombre'){
+    return a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' });
+  }
+  return a[campo] - b[campo]; // dni y estado son numéricos
+}
 
 /**
  * @param {HTMLElement} container
@@ -15,6 +35,11 @@ import { setState } from '../state.js';
  * @param {{ origen: 'clientes' | 'deudores' }} opts
  */
 export function renderTablaClientes(container, clientes, { origen }){
+  // Se guardan las filas tal cual llegaron (ya filtradas por el
+  // buscador si corresponde) para poder reordenar sin depender de
+  // la vista que llamó a esta función.
+  container._clientes = clientes;
+
   if (!clientes.length){
     container.innerHTML = `
       <div class="estado-vacio">
@@ -24,22 +49,28 @@ export function renderTablaClientes(container, clientes, { origen }){
     return;
   }
 
+  const { campo: campoOrden, dir } = getState().ordenClientes;
+  const ordenados = [...clientes].sort((a, b) => dir * comparar(a, b, campoOrden));
+
   // Se guarda el orden actual para que el detalle pueda navegar
   // con las flechas prev/next dentro de esta misma lista.
-  setState({ listContext: { dnis: clientes.map((c) => c.dni), origen } });
+  setState({ listContext: { dnis: ordenados.map((c) => c.dni), origen } });
 
   container.innerHTML = `
     <div class="tabla-wrap">
       <table class="tabla">
         <thead>
           <tr>
-            <th>DNI</th>
-            <th>Nombre</th>
-            <th>Estado</th>
+            ${COLUMNAS.map((col) => `
+              <th class="is-sortable ${col.campo === campoOrden ? `is-orden-activo ${dir === -1 ? 'is-orden-desc' : ''}` : ''}" data-campo="${col.campo}">
+                ${col.label}${icon('chevronDown').replace('<svg ', '<svg class="sort-arrow" ')}
+              </th>
+            `).join('')}
+            <th></th>
           </tr>
         </thead>
         <tbody>
-          ${clientes.map((c) => `
+          ${ordenados.map((c) => `
             <tr data-dni="${c.dni}">
               <td class="col-dni">${c.dni.toLocaleString('es-AR')}</td>
               <td class="col-nombre">${escapeHtml(c.nombre)}</td>
@@ -54,6 +85,19 @@ export function renderTablaClientes(container, clientes, { origen }){
       </p>
     </div>
   `;
+
+  container.querySelectorAll('thead th.is-sortable').forEach((th) => {
+    th.addEventListener('click', () => {
+      const campo = th.dataset.campo;
+      const ordenActual = getState().ordenClientes;
+      setState({
+        ordenClientes: ordenActual.campo === campo
+          ? { campo, dir: ordenActual.dir * -1 }
+          : { campo, dir: 1 },
+      });
+      renderTablaClientes(container, container._clientes, { origen });
+    });
+  });
 
   container.querySelectorAll('tbody tr').forEach((tr) => {
     tr.addEventListener('click', () => {

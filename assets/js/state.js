@@ -18,6 +18,16 @@ const state = {
   // pierden solos con un F5 real, que es justo lo que se busca: no
   // borrar nada por navegar, solo al refrescar la página de verdad.
   borradores: {},
+
+  // Mismo criterio que arriba, pero para la lista de Socios: el
+  // texto buscado y el orden de columna elegido. Antes vivían en
+  // variables locales de clientesList.js/tablaClientes.js, que se
+  // reinician solas cada vez que el router vuelve a montar la vista
+  // — por eso se "perdía" el filtro con solo cambiar de pestaña.
+  // Ahora quedan acá, sobreviven navegar y solo un F5 real los
+  // limpia (ver router.js/auth.js).
+  filtroClientes: '',
+  ordenClientes: { campo: 'nombre', dir: 1 },
 };
 
 const listeners = new Set();

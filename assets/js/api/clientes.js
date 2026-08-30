@@ -9,23 +9,39 @@ import { supabase } from '../supabaseClient.js';
 
 const COLUMNAS_VISTA = 'dni, nombre, telefono, actividad_id, actividad, precio, comentarios, fecha_pago, dias_credito, fecha_vencimiento, estado, activo';
 
+// PostgREST (la API de Supabase) devuelve como mucho 1000 filas por
+// consulta, calladito — sin error, simplemente corta ahí. Con más de
+// 1000 clientes, listarClientes() se quedaba a mitad de camino del
+// abecedario y "desaparecían" los apellidos de la segunda mitad
+// (por eso no aparecía nadie con Z). Acá se pagina con .range() y
+// se van pidiendo de a 1000 hasta que una página vuelve incompleta.
+const TAMANIO_PAGINA = 1000;
+
+async function listarPaginado(vista, construirQuery){
+  let desde = 0;
+  let todo = [];
+  for (;;) {
+    const { data, error } = await construirQuery(supabase.from(vista).select(COLUMNAS_VISTA))
+      .range(desde, desde + TAMANIO_PAGINA - 1);
+    if (error) throw error;
+    todo = todo.concat(data);
+    if (data.length < TAMANIO_PAGINA) break;
+    desde += TAMANIO_PAGINA;
+  }
+  return todo;
+}
+
 export async function listarClientes(){
-  const { data, error } = await supabase
-    .from('v_clientes')
-    .select(COLUMNAS_VISTA)
+  return listarPaginado('v_clientes', (q) => q
     .eq('activo', true)
-    .order('nombre', { ascending: true });
-  if (error) throw error;
-  return data;
+    .order('nombre', { ascending: true })
+    .order('dni', { ascending: true })); // desempate estable entre nombres iguales, para que la paginación no repita ni salte filas
 }
 
 export async function listarDeudores(){
-  const { data, error } = await supabase
-    .from('v_deudores')
-    .select(COLUMNAS_VISTA)
-    .order('estado', { ascending: true }); // más vencidos primero
-  if (error) throw error;
-  return data;
+  return listarPaginado('v_deudores', (q) => q
+    .order('estado', { ascending: true }) // más vencidos primero
+    .order('dni', { ascending: true }));
 }
 
 export async function obtenerCliente(dni){

@@ -17,7 +17,10 @@ export async function iniciarSesion(email, password){
 
 export async function cerrarSesion(){
   await supabase.auth.signOut();
-  setState({ session: null, clientes: [], actividades: [], borradores: {} });
+  setState({
+    session: null, clientes: [], actividades: [], borradores: {},
+    filtroClientes: '', ordenClientes: { campo: 'nombre', dir: 1 },
+  });
 }
 
 export async function obtenerSesionActual(){

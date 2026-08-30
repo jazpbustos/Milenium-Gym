@@ -163,7 +163,17 @@ table.tabla thead th{
 }
 table.tabla thead th.is-sortable{ cursor: pointer; user-select: none; }
 table.tabla thead th.is-sortable:hover{ color: var(--text); }
-table.tabla thead th .sort-arrow{ margin-left: 4px; opacity: .6; }
+table.tabla thead th .sort-arrow{
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-left: 4px;
+  vertical-align: -1px;
+  opacity: 0;
+  transition: transform .15s var(--ease);
+}
+table.tabla thead th.is-orden-activo .sort-arrow{ opacity: .85; }
+table.tabla thead th.is-orden-desc .sort-arrow{ transform: rotate(180deg); }
 table.tabla tbody tr{
   border-bottom: 1px solid var(--line);
   cursor: pointer;
@@ -495,6 +505,15 @@ table.tabla tfoot td{
 
 /* ---------- vista detalle ---------- */
 .detail-shell{ max-width: 640px; margin: 0 auto; }
+.detail-nombre{
+  padding: var(--sp-5) var(--sp-5) var(--sp-2);
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--text);
+  text-align: center;
+  word-break: break-word;
+}
 .detail-field{
   padding: var(--sp-4) var(--sp-5);
   border-bottom: 1px solid var(--line);

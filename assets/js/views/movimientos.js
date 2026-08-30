@@ -19,7 +19,7 @@ const PERIODOS = [
 function creacionDesde(periodo){
   const ahora = new Date();
   const inicioHoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
-  const inicioHistorial = new Date(`${MOVIMIENTOS_DESDE}T00:00:00`);
+  const inicioHistorial = new Date(MOVIMIENTOS_DESDE);
   let desde = inicioHistorial;
   if (periodo === 'hoy') desde = inicioHoy;
   if (periodo === '7dias'){

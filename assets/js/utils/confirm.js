@@ -11,11 +11,11 @@ export function pedirConfirmacion({ titulo, mensaje, textoConfirmar = 'Confirmar
     overlay.className = 'confirm-overlay';
     overlay.innerHTML = `
       <div class="confirm-card">
-        <h3>${titulo}</h3>
-        <p>${mensaje}</p>
+        <h3>${escapeHtml(titulo)}</h3>
+        <p>${escapeHtml(mensaje)}</p>
         <div class="confirm-actions">
           <button type="button" class="btn btn-ghost" id="confirm-cancel">Cancelar</button>
-          <button type="button" class="btn ${peligroso ? 'btn-danger' : 'btn-primary'}" id="confirm-ok">${textoConfirmar}</button>
+          <button type="button" class="btn ${peligroso ? 'btn-danger' : 'btn-primary'}" id="confirm-ok">${escapeHtml(textoConfirmar)}</button>
         </div>
       </div>
     `;
@@ -26,4 +26,10 @@ export function pedirConfirmacion({ titulo, mensaje, textoConfirmar = 'Confirmar
     overlay.querySelector('#confirm-cancel').addEventListener('click', () => cerrar(false));
     overlay.querySelector('#confirm-ok').addEventListener('click', () => cerrar(true));
   });
+}
+
+function escapeHtml(valor){
+  const div = document.createElement('div');
+  div.textContent = valor ?? '';
+  return div.innerHTML;
 }

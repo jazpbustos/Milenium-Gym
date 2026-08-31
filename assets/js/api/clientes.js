@@ -139,6 +139,17 @@ export async function darDeBajaCliente(dni){
   if (error) throw error;
 }
 
+export async function reactivarCliente(dni){
+  const { data, error } = await supabase
+    .from('clientes')
+    .update({ activo: true })
+    .eq('dni', dni)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 function mapPayloadATabla(payload){
   return {
     dni: payload.dni,

@@ -7,7 +7,7 @@
 // que vino (MILENIUM GYM o DEUDAS).
 // ============================================================
 
-import { obtenerCliente, darDeBajaCliente } from '../api/clientes.js';
+import { obtenerCliente, darDeBajaCliente, reactivarCliente } from '../api/clientes.js';
 import { icon } from '../components/icons.js';
 import { formatearFecha, formatearPrecio, claseEstado, textoEstado } from '../utils/formato.js';
 import { telHref, formatearVisual } from '../utils/telefono.js';
@@ -25,31 +25,7 @@ export async function renderClienteDetail(container, params, { renderTopbar }){
   renderTopbar({
     title: 'Detalle',
     onBack: () => navegarA(origenRuta),
-    actions: [
-      {
-        icono: 'tacho',
-        titulo: 'Dar de baja',
-        claseExtra: 'is-danger',
-        onClick: async () => {
-          const ok = await pedirConfirmacion({
-            titulo: 'Confirmar baja',
-            mensaje: '¿Deseás confirmar la baja de este cliente?',
-            textoConfirmar: 'Confirmar',
-          });
-          if (!ok) return;
-          try {
-            await darDeBajaCliente(dni);
-            // La lista de Socios vive en memoria para no consultar la base
-            // cada vez que se cambia de pestaña. Después de una baja hay que
-            // invalidarla: al volver, clientesList la carga nuevamente y el
-            // socio desaparece sin que la persona tenga que refrescar.
-            setState({ clientes: [] });
-            mostrarToast('Cliente dado de baja.');
-            navegarA(origenRuta);
-          } catch (err) { mostrarError(err); }
-        },
-      },
-    ],
+    actions: [],
   });
 
   container.innerHTML = `<div class="loading-bar"></div>`;
@@ -67,6 +43,30 @@ export async function renderClienteDetail(container, params, { renderTopbar }){
     container.innerHTML = `<div class="estado-vacio"><p>No encontramos un cliente con ese DNI.</p></div>`;
     return;
   }
+
+  renderTopbar({
+    title: cliente.activo ? 'Detalle' : 'Cliente inactivo',
+    onBack: () => navegarA(origenRuta),
+    actions: cliente.activo ? [{
+      icono: 'tacho',
+      titulo: 'Dar de baja',
+      claseExtra: 'is-danger',
+      onClick: async () => {
+        const ok = await pedirConfirmacion({
+          titulo: 'Confirmar baja',
+          mensaje: '¿Deseás confirmar la baja de este cliente?',
+          textoConfirmar: 'Confirmar',
+        });
+        if (!ok) return;
+        try {
+          await darDeBajaCliente(dni);
+          setState({ clientes: [] });
+          mostrarToast('Cliente dado de baja.');
+          navegarA(origenRuta);
+        } catch (err) { mostrarError(err); }
+      },
+    }] : [],
+  });
 
   const dnis = listContext.dnis;
   const idx = dnis.indexOf(dni);
@@ -132,12 +132,38 @@ export async function renderClienteDetail(container, params, { renderTopbar }){
 
     <div class="detail-primary-actions">
       <button type="button" class="btn btn-ghost" id="btn-editar-datos">${icon('lapiz')}<span>Editar datos</span></button>
-      <button type="button" class="btn btn-primary" id="btn-registrar-pago">${icon('calendario')}<span>Registrar pago</span></button>
+      ${cliente.activo
+        ? `<button type="button" class="btn btn-primary" id="btn-registrar-pago">${icon('calendario')}<span>Registrar pago</span></button>`
+        : `<button type="button" class="btn btn-primary" id="btn-reactivar">${icon('refrescar')}<span>Reactivar cliente</span></button>`}
     </div>
   `;
 
   container.querySelector('#btn-editar-datos').addEventListener('click', () => navegarA(`/cliente/${dni}/datos`));
-  container.querySelector('#btn-registrar-pago').addEventListener('click', () => navegarA(`/cliente/${dni}/pago`));
+  const btnRegistrarPago = container.querySelector('#btn-registrar-pago');
+  if (btnRegistrarPago) btnRegistrarPago.addEventListener('click', () => navegarA(`/cliente/${dni}/pago`));
+
+  const btnReactivar = container.querySelector('#btn-reactivar');
+  if (btnReactivar){
+    btnReactivar.addEventListener('click', async () => {
+      const ok = await pedirConfirmacion({
+        titulo: 'Reactivar cliente',
+        mensaje: `¿Deseás reactivar a ${cliente.nombre}?`,
+        textoConfirmar: 'Reactivar',
+        peligroso: false,
+      });
+      if (!ok) return;
+      try {
+        btnReactivar.disabled = true;
+        await reactivarCliente(dni);
+        setState({ clientes: [] });
+        mostrarToast('Cliente reactivado.');
+        navegarA('/clientes');
+      } catch (err) {
+        btnReactivar.disabled = false;
+        mostrarError(err);
+      }
+    });
+  }
 
   const btnPrev = container.querySelector('.detail-nav-arrow.is-prev');
   const btnNext = container.querySelector('.detail-nav-arrow.is-next');

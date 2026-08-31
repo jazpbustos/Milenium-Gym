@@ -22,7 +22,7 @@ select
   c.fecha_pago,
   c.dias_credito,
   c.fecha_vencimiento,
-  (c.fecha_vencimiento - current_date)::int     as estado,  -- negativo = deuda, positivo = activo
+  (c.fecha_vencimiento - (now() at time zone 'America/Argentina/Buenos_Aires')::date)::int as estado,
   c.activo,
   c.creado_en,
   c.actualizado_en

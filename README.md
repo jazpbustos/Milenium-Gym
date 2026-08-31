@@ -37,12 +37,9 @@ assets/
       formato.js (fechas/precio/estado), telefono.js, whatsapp.js,
       toast.js, confirm.js
 sql/
-  01_schema.sql, 02_vistas.sql, 03_rls.sql, 04_rpc_checkin.sql,
-  05_seed_actividades.sql, 06_agregar_orden_actividades.sql,
-  07_historial_pagos.sql, 08_dias_credito_actividades.sql,
-  09_pago_unico_cliente_fecha.sql, 10_dni_editable.sql,
-  11_dashboard_estadisticas.sql, 12_edicion_sin_pago.sql
-                            → correr en ese orden, una sola vez
+  01_schema.sql ... 20_archivar_cliente_y_liberar_dni.sql
+                            → historial ordenado de migraciones
+  README.md                 → índice y reglas para cambios nuevos
 ```
 
 Ninguna vista llama a Supabase directo: siempre pasa por `api/`. Así, el día que quieras cambiar de backend, tocás dos archivos y no quince.
@@ -55,20 +52,9 @@ En [supabase.com](https://supabase.com), creá un proyecto nuevo (plan gratuito 
 
 ### 2. Correr el SQL
 
-`Panel de Supabase → SQL Editor`, y pegá el contenido de cada archivo de `sql/`, **en orden**, uno por uno:
+`Panel de Supabase → SQL Editor`, y ejecutá las migraciones numeradas en orden. El índice completo y las reglas para agregar cambios están en [`sql/README.md`](sql/README.md).
 
-1. `01_schema.sql` — tablas CLIENTES y ACTIVIDADES
-2. `02_vistas.sql` — vistas calculadas (ESTADO, DEUDORES, estadísticas)
-3. `03_rls.sql` — seguridad: sin esto, cualquiera con la URL del proyecto podría leer o escribir todo
-4. `04_rpc_checkin.sql` — la función que va a usar el check-in de la tablet
-5. `05_seed_actividades.sql` (opcional) — carga actividades de ejemplo
-6. `06_agregar_orden_actividades.sql` — agrega el orden manual si la base ya existía
-7. `07_historial_pagos.sql` — crea el historial y registra automáticamente los pagos nuevos
-8. `08_dias_credito_actividades.sql` — agrega los días de crédito al catálogo de actividades
-9. `09_pago_unico_cliente_fecha.sql` — corrige el movimiento existente al guardar nuevamente el mismo socio y fecha
-10. `10_dni_editable.sql` — permite corregir el DNI conservando el historial del socio
-11. `11_dashboard_estadisticas.sql` — crea los indicadores del tablero de estadísticas
-12. `12_edicion_sin_pago.sql` — permite actualizar datos sin registrar un pago ficticio
+La base de producción ya tiene aplicadas las migraciones `01` a `20`: no deben volver a ejecutarse allí.
 
 ### 3. Crear los usuarios
 
@@ -103,13 +89,6 @@ Y abrís `http://localhost:8080`.
 
 Sin build, cualquier hosting estático sirve: [Netlify](https://netlify.com) (arrastrar la carpeta) o GitHub Pages (activarlo en la configuración del repo). No hace falta configurar nada especial — es HTML/CSS/JS plano.
 
-## Migrar los datos desde AppSheet
-
-1. Exportá `ACTIVIDADES` y `CLIENTES` desde tu Google Sheet actual a CSV.
-2. En Supabase, `Table Editor → clientes/actividades → Insert → Import from CSV`, o subilos a una tabla de staging y limpiá desde el SQL Editor si hay inconsistencias de nombres de actividad.
-3. Antes de dar de baja AppSheet, revisá que el **conteo de filas** en Supabase coincida con el de la planilla — un `join` mal hecho en la migración puede descartar clientes en silencio si el nombre de la actividad no matchea exactamente (espacios, tildes).
-4. Normalizá los teléfonos a formato `+549XXXXXXXXXX` durante la migración (o dejá que el formulario los ajuste al editarlos uno por uno — ver `utils/telefono.js`).
-
 ## Conectar el check-in
 
 En `Check-in-Milenium/assets/js/script.js`, reemplazá el `fetch` al Apps Script por una llamada a la función `buscar_socio` de Supabase (creada en `sql/04_rpc_checkin.sql`):
@@ -128,7 +107,7 @@ El resto del archivo (cálculo de días, colores, auto-reset) no cambia.
 
 - **El precio se guarda en cada cliente**, no se recalcula solo contra `actividades.precio`. Al elegir la actividad en el formulario, el precio se autocompleta como sugerencia (`views/clienteForm.js`); en cuanto tocás el campo, deja de pisarse. Así un precio pactado con un socio no se borra si después le cambiás la actividad.
 - **ESTADO no es una columna**: se calcula en `v_clientes` contra la fecha de hoy en cada consulta (`sql/02_vistas.sql`). Guardarlo como columna lo dejaría congelado en la fecha en que se escribió.
-- **Baja lógica, no DELETE**: dar de baja a un cliente pone `activo = false`, no borra la fila. Reactivar a alguien es un `update` directo en Supabase si hace falta.
+- **Eliminar archiva y libera el DNI**: el cliente deja de aparecer en Socios y su DNI se puede reutilizar. La fila interna permanece asociada a sus pagos mediante `cliente_id`, por lo que el historial no se mezcla ni se borra.
 - **Las deudas se consultan dentro de Socios**: el filtro `Con deuda` muestra `estado < 0`, y la tabla conserva el orden ascendente/descendente habitual.
 - **Los pagos tienen historial propio**: `pagos` conserva importe, actividad, crédito y vencimiento de cada movimiento. `clientes.fecha_pago` sigue guardando el último pago para que ESTADO y el check-in sean rápidos.
 

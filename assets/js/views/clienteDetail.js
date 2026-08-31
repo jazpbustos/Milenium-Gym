@@ -131,14 +131,17 @@ export async function renderClienteDetail(container, params, { renderTopbar }){
     </div>
 
     <div class="detail-primary-actions">
-      <button type="button" class="btn btn-ghost" id="btn-editar-datos">${icon('lapiz')}<span>Editar datos</span></button>
+      ${cliente.activo
+        ? `<button type="button" class="btn btn-ghost" id="btn-editar-datos">${icon('lapiz')}<span>Editar datos</span></button>`
+        : ''}
       ${cliente.activo
         ? `<button type="button" class="btn btn-primary" id="btn-registrar-pago">${icon('calendario')}<span>Registrar pago</span></button>`
         : `<button type="button" class="btn btn-primary" id="btn-reactivar">${icon('refrescar')}<span>Reactivar cliente</span></button>`}
     </div>
   `;
 
-  container.querySelector('#btn-editar-datos').addEventListener('click', () => navegarA(`/cliente/${dni}/datos`));
+  const btnEditarDatos = container.querySelector('#btn-editar-datos');
+  if (btnEditarDatos) btnEditarDatos.addEventListener('click', () => navegarA(`/cliente/${dni}/datos`));
   const btnRegistrarPago = container.querySelector('#btn-registrar-pago');
   if (btnRegistrarPago) btnRegistrarPago.addEventListener('click', () => navegarA(`/cliente/${dni}/pago`));
 

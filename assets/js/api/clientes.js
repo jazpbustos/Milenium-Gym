@@ -69,7 +69,7 @@ export async function crearCliente(payload){
       if (errorLectura) throw errorLectura;
 
       if (existente && !existente.activo){
-        const filaReactivada = { ...fila, activo: true, registrar_pago: true };
+        const filaReactivada = { ...fila, activo: true };
         delete filaReactivada.dni;
         const { data: reactivado, error: errorReactivacion } = await supabase
           .from('clientes')
@@ -90,7 +90,6 @@ export async function crearCliente(payload){
 
 export async function actualizarCliente(dni, payload, { registrarPago = true } = {}){
   const fila = mapPayloadATabla(payload);
-  fila.registrar_pago = registrarPago;
   if (!registrarPago){
     // Una corrección administrativa no toca ningún dato de la cuota.
     // Así cambiar teléfono, nombre, DNI o comentarios no modifica el

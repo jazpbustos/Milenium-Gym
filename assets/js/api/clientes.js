@@ -58,34 +58,27 @@ export async function crearCliente(payload){
 
   if (error){
     if (error.code === '23505'){
-      // Una baja es lógica: el DNI continúa en la tabla para conservar
-      // sus pagos. Si se vuelve a cargar ese DNI, reactivamos la misma
-      // persona y actualizamos sus datos en vez de crear un duplicado.
+      // Una baja es lógica: el DNI continúa reservado para esa persona.
+      // Nunca se sobrescriben automáticamente sus datos ni su historial.
       const { data: existente, error: errorLectura } = await supabase
         .from('clientes')
-        .select('dni, activo')
+        .select('dni, nombre, activo')
         .eq('dni', payload.dni)
         .maybeSingle();
       if (errorLectura) throw errorLectura;
 
       if (existente && !existente.activo){
-        const filaReactivada = { ...fila, activo: true };
-        delete filaReactivada.dni;
-        const { data: reactivado, error: errorReactivacion } = await supabase
-          .from('clientes')
-          .update(filaReactivada)
-          .eq('dni', payload.dni)
-          .select()
-          .single();
-        if (errorReactivacion) throw errorReactivacion;
-        return { ...reactivado, reactivado: true };
+        const errorInactivo = new Error(`El DNI ${payload.dni} pertenece a ${existente.nombre}, que está dado de baja. Reactivalo antes de continuar.`);
+        errorInactivo.tipo = 'CLIENTE_INACTIVO';
+        errorInactivo.dni = existente.dni;
+        throw errorInactivo;
       }
 
       throw new Error(`Ya existe un cliente activo con el DNI ${payload.dni}.`);
     }
     throw error;
   }
-  return { ...data, reactivado: false };
+  return data;
 }
 
 export async function actualizarCliente(dni, payload, { registrarPago = true } = {}){

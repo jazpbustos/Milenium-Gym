@@ -320,13 +320,19 @@ export async function renderClienteForm(container, params, { renderTopbar }){
         await actualizarCliente(dniEdicion, payload, { registrarPago });
         mostrarToast(registrarPago ? 'Pago registrado.' : 'Datos del cliente actualizados.');
       } else {
-        const resultado = await crearCliente(payload);
-        mostrarToast(resultado.reactivado ? 'Cliente reactivado.' : 'Cliente creado.');
+        await crearCliente(payload);
+        mostrarToast('Cliente creado.');
       }
       borrarBorrador(clave);
       setState({ clientes: [] }); // fuerza recarga de la lista con datos frescos
       navegarA(`/cliente/${dni}`);
     } catch (err) {
+      if (err?.tipo === 'CLIENTE_INACTIVO'){
+        borrarBorrador(clave);
+        mostrarToast(err.message, { error: true, duracionMs: 5200 });
+        navegarA(`/cliente/${err.dni}`);
+        return;
+      }
       mostrarError(err);
     } finally {
       btnGuardar.textContent = 'Guardar';

@@ -220,6 +220,7 @@ table.tabla tbody tr{
   transition: background .1s var(--ease);
 }
 table.tabla tbody tr:hover{ background: var(--surface-2); }
+.movimientos-tabla tbody tr{ cursor: default; }
 table.tabla tbody td{
   padding: var(--sp-3) var(--sp-4);
   font-size: 15px;

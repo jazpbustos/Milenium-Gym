@@ -58,22 +58,6 @@ export async function crearCliente(payload){
 
   if (error){
     if (error.code === '23505'){
-      // Una baja es lógica: el DNI continúa reservado para esa persona.
-      // Nunca se sobrescriben automáticamente sus datos ni su historial.
-      const { data: existente, error: errorLectura } = await supabase
-        .from('clientes')
-        .select('dni, nombre, activo')
-        .eq('dni', payload.dni)
-        .maybeSingle();
-      if (errorLectura) throw errorLectura;
-
-      if (existente && !existente.activo){
-        const errorInactivo = new Error(`El DNI ${payload.dni} pertenece a ${existente.nombre}, que está dado de baja. Reactivalo antes de continuar.`);
-        errorInactivo.tipo = 'CLIENTE_INACTIVO';
-        errorInactivo.dni = existente.dni;
-        throw errorInactivo;
-      }
-
       throw new Error(`Ya existe un cliente activo con el DNI ${payload.dni}.`);
     }
     throw error;
@@ -122,25 +106,14 @@ export async function registrarPagoHoy(dni){
   return data;
 }
 
-// Baja lógica: nunca DELETE de un socio real. activo=false lo
-// saca de las listas sin perder su historial.
-export async function darDeBajaCliente(dni){
+// Archiva el registro y libera su DNI. El id interno no cambia, por eso
+// sus pagos históricos continúan asociados al cliente correcto.
+export async function eliminarCliente(dni){
   const { error } = await supabase
     .from('clientes')
-    .update({ activo: false })
+    .update({ activo: false, dni: null })
     .eq('dni', dni);
   if (error) throw error;
-}
-
-export async function reactivarCliente(dni){
-  const { data, error } = await supabase
-    .from('clientes')
-    .update({ activo: true })
-    .eq('dni', dni)
-    .select()
-    .single();
-  if (error) throw error;
-  return data;
 }
 
 function mapPayloadATabla(payload){

@@ -82,14 +82,13 @@ export async function renderMovimientos(container, params, { renderTopbar }){
       return;
     }
 
-    setState({ listContext: { dnis: visibles.map((p) => p.cliente_dni), origen: 'movimientos' } });
     host.innerHTML = `
       <div class="movimientos-resumen"><strong>${visibles.length} pago${visibles.length === 1 ? '' : 's'}</strong><span>${formatearPrecio(total)}</span></div>
       <div class="tabla-wrap">
-        <table class="tabla">
+        <table class="tabla movimientos-tabla">
           <thead><tr><th>Fecha</th><th>Socio</th><th>Actividad</th><th>Importe</th><th>Nuevo vencimiento</th></tr></thead>
           <tbody>${visibles.map((p) => `
-            <tr data-dni="${p.cliente_dni}">
+            <tr>
               <td>${formatearFecha(p.fecha_pago)}</td>
               <td class="col-nombre">${escapeHtml(p.cliente)}</td>
               <td>${escapeHtml(p.actividad)}</td>
@@ -98,8 +97,6 @@ export async function renderMovimientos(container, params, { renderTopbar }){
             </tr>`).join('')}</tbody>
         </table>
       </div>`;
-
-    host.querySelectorAll('tbody tr').forEach((tr) => tr.addEventListener('click', () => navegarA(`/cliente/${tr.dataset.dni}`)));
   }
 
   async function cargar(){

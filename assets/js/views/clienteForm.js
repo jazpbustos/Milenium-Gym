@@ -327,12 +327,6 @@ export async function renderClienteForm(container, params, { renderTopbar }){
       setState({ clientes: [] }); // fuerza recarga de la lista con datos frescos
       navegarA(`/cliente/${dni}`);
     } catch (err) {
-      if (err?.tipo === 'CLIENTE_INACTIVO'){
-        borrarBorrador(clave);
-        mostrarToast(err.message, { error: true, duracionMs: 5200 });
-        navegarA(`/cliente/${err.dni}`);
-        return;
-      }
       mostrarError(err);
     } finally {
       btnGuardar.textContent = 'Guardar';

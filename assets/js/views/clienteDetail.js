@@ -7,7 +7,7 @@
 // que vino (MILENIUM GYM o DEUDAS).
 // ============================================================
 
-import { obtenerCliente, darDeBajaCliente, reactivarCliente } from '../api/clientes.js';
+import { obtenerCliente, eliminarCliente } from '../api/clientes.js';
 import { icon } from '../components/icons.js';
 import { formatearFecha, formatearPrecio, claseEstado, textoEstado } from '../utils/formato.js';
 import { telHref, formatearVisual } from '../utils/telefono.js';
@@ -45,23 +45,23 @@ export async function renderClienteDetail(container, params, { renderTopbar }){
   }
 
   renderTopbar({
-    title: cliente.activo ? 'Detalle' : 'Cliente inactivo',
+    title: 'Detalle',
     onBack: () => navegarA(origenRuta),
     actions: cliente.activo ? [{
       icono: 'tacho',
-      titulo: 'Dar de baja',
+      titulo: 'Eliminar cliente',
       claseExtra: 'is-danger',
       onClick: async () => {
         const ok = await pedirConfirmacion({
-          titulo: 'Confirmar baja',
-          mensaje: '¿Deseás confirmar la baja de este cliente?',
+          titulo: 'Confirmar eliminación',
+          mensaje: `¿Deseás eliminar a ${cliente.nombre}?`,
           textoConfirmar: 'Confirmar',
         });
         if (!ok) return;
         try {
-          await darDeBajaCliente(dni);
+          await eliminarCliente(dni);
           setState({ clientes: [] });
-          mostrarToast('Cliente dado de baja.');
+          mostrarToast('Cliente eliminado.');
           navegarA(origenRuta);
         } catch (err) { mostrarError(err); }
       },
@@ -131,12 +131,8 @@ export async function renderClienteDetail(container, params, { renderTopbar }){
     </div>
 
     <div class="detail-primary-actions">
-      ${cliente.activo
-        ? `<button type="button" class="btn btn-ghost" id="btn-editar-datos">${icon('lapiz')}<span>Editar datos</span></button>`
-        : ''}
-      ${cliente.activo
-        ? `<button type="button" class="btn btn-primary" id="btn-registrar-pago">${icon('calendario')}<span>Registrar pago</span></button>`
-        : `<button type="button" class="btn btn-primary" id="btn-reactivar">${icon('refrescar')}<span>Reactivar cliente</span></button>`}
+      <button type="button" class="btn btn-ghost" id="btn-editar-datos">${icon('lapiz')}<span>Editar datos</span></button>
+      <button type="button" class="btn btn-primary" id="btn-registrar-pago">${icon('calendario')}<span>Registrar pago</span></button>
     </div>
   `;
 
@@ -144,29 +140,6 @@ export async function renderClienteDetail(container, params, { renderTopbar }){
   if (btnEditarDatos) btnEditarDatos.addEventListener('click', () => navegarA(`/cliente/${dni}/datos`));
   const btnRegistrarPago = container.querySelector('#btn-registrar-pago');
   if (btnRegistrarPago) btnRegistrarPago.addEventListener('click', () => navegarA(`/cliente/${dni}/pago`));
-
-  const btnReactivar = container.querySelector('#btn-reactivar');
-  if (btnReactivar){
-    btnReactivar.addEventListener('click', async () => {
-      const ok = await pedirConfirmacion({
-        titulo: 'Reactivar cliente',
-        mensaje: `¿Deseás reactivar a ${cliente.nombre}?`,
-        textoConfirmar: 'Reactivar',
-        peligroso: false,
-      });
-      if (!ok) return;
-      try {
-        btnReactivar.disabled = true;
-        await reactivarCliente(dni);
-        setState({ clientes: [] });
-        mostrarToast('Cliente reactivado.');
-        navegarA('/clientes');
-      } catch (err) {
-        btnReactivar.disabled = false;
-        mostrarError(err);
-      }
-    });
-  }
 
   const btnPrev = container.querySelector('.detail-nav-arrow.is-prev');
   const btnNext = container.querySelector('.detail-nav-arrow.is-next');

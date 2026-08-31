@@ -37,9 +37,8 @@ assets/
       formato.js (fechas/precio/estado), telefono.js, whatsapp.js,
       toast.js, confirm.js
 sql/
-  01_schema.sql ... 20_archivar_cliente_y_liberar_dni.sql
-                            → historial ordenado de migraciones
-  README.md                 → índice y reglas para cambios nuevos
+  schema_actual.sql         → estructura consolidada, sin datos
+  README.md                 → reglas para cambios nuevos
 ```
 
 Ninguna vista llama a Supabase directo: siempre pasa por `api/`. Así, el día que quieras cambiar de backend, tocás dos archivos y no quince.
@@ -52,9 +51,7 @@ En [supabase.com](https://supabase.com), creá un proyecto nuevo (plan gratuito 
 
 ### 2. Correr el SQL
 
-`Panel de Supabase → SQL Editor`, y ejecutá las migraciones numeradas en orden. El índice completo y las reglas para agregar cambios están en [`sql/README.md`](sql/README.md).
-
-La base de producción ya tiene aplicadas las migraciones `01` a `20`: no deben volver a ejecutarse allí.
+Para una base completamente nueva, ejecutá `sql/schema_actual.sql`. No lo ejecutes sobre producción: esa base ya tiene la estructura aplicada. Las reglas para cambios futuros están en [`sql/README.md`](sql/README.md).
 
 ### 3. Crear los usuarios
 
@@ -91,7 +88,7 @@ Sin build, cualquier hosting estático sirve: [Netlify](https://netlify.com) (ar
 
 ## Conectar el check-in
 
-En `Check-in-Milenium/assets/js/script.js`, reemplazá el `fetch` al Apps Script por una llamada a la función `buscar_socio` de Supabase (creada en `sql/04_rpc_checkin.sql`):
+El check-in consulta la función `buscar_socio` incluida en `sql/schema_actual.sql`:
 
 ```js
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
@@ -106,7 +103,7 @@ El resto del archivo (cálculo de días, colores, auto-reset) no cambia.
 ## Decisiones que vale la pena conocer
 
 - **El precio se guarda en cada cliente**, no se recalcula solo contra `actividades.precio`. Al elegir la actividad en el formulario, el precio se autocompleta como sugerencia (`views/clienteForm.js`); en cuanto tocás el campo, deja de pisarse. Así un precio pactado con un socio no se borra si después le cambiás la actividad.
-- **ESTADO no es una columna**: se calcula en `v_clientes` contra la fecha de hoy en cada consulta (`sql/02_vistas.sql`). Guardarlo como columna lo dejaría congelado en la fecha en que se escribió.
+- **ESTADO no es una columna**: se calcula en la vista `v_clientes` contra la fecha de hoy en cada consulta (`sql/schema_actual.sql`). Guardarlo como columna lo dejaría congelado en la fecha en que se escribió.
 - **Eliminar archiva y libera el DNI**: el cliente deja de aparecer en Socios y su DNI se puede reutilizar. La fila interna permanece asociada a sus pagos mediante `cliente_id`, por lo que el historial no se mezcla ni se borra.
 - **Las deudas se consultan dentro de Socios**: el filtro `Con deuda` muestra `estado < 0`, y la tabla conserva el orden ascendente/descendente habitual.
 - **Los pagos tienen historial propio**: `pagos` conserva importe, actividad, crédito y vencimiento de cada movimiento. `clientes.fecha_pago` sigue guardando el último pago para que ESTADO y el check-in sean rápidos.

@@ -58,16 +58,48 @@ export async function crearCliente(payload){
 
   if (error){
     if (error.code === '23505'){
-      throw new Error(`Ya existe un cliente con el DNI ${payload.dni}.`);
+      // Una baja es lógica: el DNI continúa en la tabla para conservar
+      // sus pagos. Si se vuelve a cargar ese DNI, reactivamos la misma
+      // persona y actualizamos sus datos en vez de crear un duplicado.
+      const { data: existente, error: errorLectura } = await supabase
+        .from('clientes')
+        .select('dni, activo')
+        .eq('dni', payload.dni)
+        .maybeSingle();
+      if (errorLectura) throw errorLectura;
+
+      if (existente && !existente.activo){
+        const filaReactivada = { ...fila, activo: true, registrar_pago: true };
+        delete filaReactivada.dni;
+        const { data: reactivado, error: errorReactivacion } = await supabase
+          .from('clientes')
+          .update(filaReactivada)
+          .eq('dni', payload.dni)
+          .select()
+          .single();
+        if (errorReactivacion) throw errorReactivacion;
+        return { ...reactivado, reactivado: true };
+      }
+
+      throw new Error(`Ya existe un cliente activo con el DNI ${payload.dni}.`);
     }
     throw error;
   }
-  return data;
+  return { ...data, reactivado: false };
 }
 
-export async function actualizarCliente(dni, payload){
+export async function actualizarCliente(dni, payload, { registrarPago = true } = {}){
   const fila = mapPayloadATabla(payload);
-  delete fila.dni; // el DNI es la clave, no se reasigna en un update
+  fila.registrar_pago = registrarPago;
+  if (!registrarPago){
+    // Una corrección administrativa no toca ningún dato de la cuota.
+    // Así cambiar teléfono, nombre, DNI o comentarios no modifica el
+    // vencimiento ni crea un movimiento indirectamente.
+    delete fila.actividad_id;
+    delete fila.precio;
+    delete fila.fecha_pago;
+    delete fila.dias_credito;
+  }
 
   const { data, error } = await supabase
     .from('clientes')
@@ -75,7 +107,12 @@ export async function actualizarCliente(dni, payload){
     .eq('dni', dni)
     .select()
     .single();
-  if (error) throw error;
+  if (error){
+    if (error.code === '23505'){
+      throw new Error(`Ya existe otro cliente con el DNI ${payload.dni}.`);
+    }
+    throw error;
+  }
   return data;
 }
 

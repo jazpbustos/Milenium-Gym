@@ -51,8 +51,11 @@ select
   a.nombre as actividad,
   count(c.dni) as cantidad
 from actividades a
-left join clientes c on c.actividad_id = a.id and c.activo = true
+left join clientes c
+  on c.actividad_id = a.id
+  and c.activo = true
+  and c.fecha_vencimiento > (now() at time zone 'America/Argentina/Buenos_Aires')::date
 group by a.id, a.nombre
 order by cantidad desc;
 
-comment on view v_estadisticas_actividad is 'Cantidad de clientes activos por actividad, para el gráfico de ESTADISTICAS.';
+comment on view v_estadisticas_actividad is 'Cantidad de socios con cuota vigente por actividad.';

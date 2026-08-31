@@ -14,7 +14,7 @@ import { telHref, formatearVisual } from '../utils/telefono.js';
 import { waHref, mensajeRecordatorio } from '../utils/whatsapp.js';
 import { mostrarError, mostrarToast } from '../utils/toast.js';
 import { pedirConfirmacion } from '../utils/confirm.js';
-import { getState } from '../state.js';
+import { getState, setState } from '../state.js';
 import { navegarA } from '../router.js';
 
 export async function renderClienteDetail(container, params, { renderTopbar }){
@@ -32,13 +32,18 @@ export async function renderClienteDetail(container, params, { renderTopbar }){
         claseExtra: 'is-danger',
         onClick: async () => {
           const ok = await pedirConfirmacion({
-            titulo: 'Dar de baja al cliente',
-            mensaje: 'El cliente deja de aparecer en las listas, pero su historial no se borra. Se puede reactivar más adelante desde la base si hace falta.',
-            textoConfirmar: 'Dar de baja',
+            titulo: 'Confirmar baja',
+            mensaje: '¿Deseás confirmar la baja de este cliente?',
+            textoConfirmar: 'Confirmar',
           });
           if (!ok) return;
           try {
             await darDeBajaCliente(dni);
+            // La lista de Socios vive en memoria para no consultar la base
+            // cada vez que se cambia de pestaña. Después de una baja hay que
+            // invalidarla: al volver, clientesList la carga nuevamente y el
+            // socio desaparece sin que la persona tenga que refrescar.
+            setState({ clientes: [] });
             mostrarToast('Cliente dado de baja.');
             navegarA(origenRuta);
           } catch (err) { mostrarError(err); }
@@ -122,13 +127,17 @@ export async function renderClienteDetail(container, params, { renderTopbar }){
       </p>
     </div>
 
-    <div style="height:88px;"></div>
+    <div style="height:104px;"></div>
     </div>
 
-    <button type="button" class="fab fab-standalone" id="fab-editar" title="Editar">${icon('lapiz')}</button>
+    <div class="detail-primary-actions">
+      <button type="button" class="btn btn-ghost" id="btn-editar-datos">${icon('lapiz')}<span>Editar datos</span></button>
+      <button type="button" class="btn btn-primary" id="btn-registrar-pago">${icon('calendario')}<span>Registrar pago</span></button>
+    </div>
   `;
 
-  container.querySelector('#fab-editar').addEventListener('click', () => navegarA(`/cliente/${dni}/editar`));
+  container.querySelector('#btn-editar-datos').addEventListener('click', () => navegarA(`/cliente/${dni}/datos`));
+  container.querySelector('#btn-registrar-pago').addEventListener('click', () => navegarA(`/cliente/${dni}/pago`));
 
   const btnPrev = container.querySelector('.detail-nav-arrow.is-prev');
   const btnNext = container.querySelector('.detail-nav-arrow.is-next');

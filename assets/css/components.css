@@ -155,7 +155,7 @@
   height: 30px;
   padding: 0 11px;
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: 0;
   color: var(--text-faint);
   font-size: 12px;
   font-weight: 500;
@@ -232,6 +232,53 @@ table.tabla tfoot td{
   text-align: center;
   color: var(--text-faint);
   font-size: 14px;
+}
+
+/* Socios usa tres columnas visibles con proporciones estables. En
+   escritorio evita el gran vacío entre Nombre y Estado; en móvil
+   elimina el ancho mínimo de la tabla para no generar scroll lateral. */
+.tabla-clientes{ table-layout: fixed; }
+.tabla-clientes .col-ancho-dni{ width: 20%; }
+.tabla-clientes .col-ancho-nombre{ width: 28%; }
+.tabla-clientes .col-ancho-estado{ width: auto; }
+.tabla-clientes .col-ancho-chevron{ width: 40px; }
+.tabla-clientes td.col-dni,
+.tabla-clientes td.col-nombre{
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 520px){
+  .tabla-clientes-wrap{ overflow-x: hidden; }
+  table.tabla.tabla-clientes{ min-width: 0; }
+  .tabla-clientes .col-ancho-dni{ width: 30%; }
+  .tabla-clientes .col-ancho-nombre{ width: 45%; }
+  .tabla-clientes .col-ancho-estado{ width: 25%; }
+  .tabla-clientes .col-ancho-chevron,
+  .tabla-clientes th:last-child,
+  .tabla-clientes td.col-chevron{ display: none; }
+  .tabla-clientes thead th,
+  .tabla-clientes tbody td{
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  .tabla-clientes thead th{ font-size: 10.5px; letter-spacing: .035em; }
+  .tabla-clientes tbody td{ font-size: 13px; }
+  .tabla-clientes th.col-head-nombre,
+  .tabla-clientes td.col-nombre{ text-align: center; }
+  .tabla-clientes th.col-head-estado,
+  .tabla-clientes tbody td:nth-child(3){ text-align: right; }
+  .tabla-clientes .badge-estado{
+    max-width: 100%;
+    height: 22px;
+    padding: 0 6px;
+    font-size: 12px;
+  }
+  .tabla-clientes thead th .sort-arrow{
+    width: 10px;
+    height: 10px;
+    margin-left: 2px;
+  }
 }
 
 /* ---------- deck (vista ACTIVIDADES) ---------- */
@@ -327,23 +374,31 @@ table.tabla tfoot td{
    que el formulario se distinga del resto — no todo negro parejo.
    La barra de Cancelar/Guardar queda fija abajo, pegada al borde
    de la pantalla, sin importar cuánto contenido tenga el form. */
-.form-shell{ display: flex; flex-direction: column; }
+.form-shell{
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: calc(79px + env(safe-area-inset-bottom));
+}
 .form-shell-fields{
   width: calc(100% - var(--sp-5) * 2);
   max-width: 640px;
-  margin: var(--sp-4) auto 96px;
+  margin: 0 auto;
   padding: var(--sp-5);
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 0;
   border-radius: var(--radius-lg);
 }
 
 .form-field{
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
   margin-bottom: var(--sp-4);
 }
+.form-field[hidden],
+.form-row-2[hidden]{ display: none; }
 .form-field label{
   font-size: 12.5px;
   font-weight: 600;
@@ -356,6 +411,8 @@ table.tabla tfoot td{
 .form-field input,
 .form-field select,
 .form-field textarea{
+  width: 100%;
+  min-width: 0;
   height: 46px;
   padding: 0 var(--sp-3);
   background: var(--field-bg);
@@ -460,6 +517,21 @@ table.tabla tfoot td{
   .form-actions-bar .btn{ width: 128px; }
 }
 
+@media (max-width: 430px){
+  .form-shell-fields{
+    width: 100%;
+    padding: var(--sp-4);
+  }
+  .form-actions-bar{
+    padding: var(--sp-3) var(--sp-4) max(var(--sp-3), env(safe-area-inset-bottom));
+  }
+  .form-actions-bar .btn{
+    flex: 1;
+    width: auto;
+    max-width: 180px;
+  }
+}
+
 /* ---------- popup para elegir actividad ---------- */
 /* Ocupa el mismo ancho que la columna del formulario (640px,
    igual que .form-shell-fields) — no pantalla completa de punta a
@@ -524,7 +596,13 @@ table.tabla tfoot td{
   border-radius: 50%;
   background: var(--naranja);
 }
-.picker-item-nombre{ flex: 1; font-size: 15.5px; font-weight: 500; }
+.picker-item-nombre{
+  flex: 1;
+  min-width: 0;
+  font-size: 15.5px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
 .picker-item-precio{
   font-family: var(--font-mono);
   font-size: 14px;
@@ -536,15 +614,41 @@ table.tabla tfoot td{
 /* filas de dos columnas en formulario (pago / crédito) */
 .form-row-2{
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--sp-4);
 }
-@media (max-width: 380px){
+@media (max-width: 360px){
   .form-row-2{ grid-template-columns: 1fr; }
 }
 
 /* ---------- vista detalle ---------- */
 .detail-shell{ max-width: 640px; margin: 0 auto; }
+.detail-primary-actions{
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  padding-bottom: max(var(--sp-4), env(safe-area-inset-bottom));
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+}
+.detail-primary-actions .btn{
+  width: min(190px, calc(50% - var(--sp-3)));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+}
+.detail-primary-actions .btn svg{ width: 18px; height: 18px; }
+@media (max-width: 390px){
+  .detail-primary-actions{ gap: var(--sp-2); padding-left: var(--sp-3); padding-right: var(--sp-3); }
+  .detail-primary-actions .btn{ font-size: 13px; }
+}
 .detail-nombre{
   padding: var(--sp-5) var(--sp-5) var(--sp-2);
   font-size: 36px;

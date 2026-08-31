@@ -9,14 +9,14 @@ import { supabase } from '../supabaseClient.js';
 export async function listarActividades(){
   const { data, error } = await supabase
     .from('actividades')
-    .select('id, nombre, precio, orden')
+    .select('id, nombre, precio, dias_credito, orden')
     .order('orden', { ascending: true })
     .order('nombre', { ascending: true }); // desempate si dos quedaron con el mismo orden
   if (error) throw error;
   return data;
 }
 
-export async function crearActividad({ nombre, precio }){
+export async function crearActividad({ nombre, precio, dias_credito }){
   // Nueva actividad: va al final de la lista (orden manual), no
   // se mezcla sola en el medio. Después se reordena con los
   // botones de subir/bajar si hace falta.
@@ -31,7 +31,7 @@ export async function crearActividad({ nombre, precio }){
 
   const { data, error } = await supabase
     .from('actividades')
-    .insert({ nombre: nombre.trim(), precio, orden: siguienteOrden })
+    .insert({ nombre: nombre.trim(), precio, dias_credito, orden: siguienteOrden })
     .select()
     .single();
   if (error){
@@ -55,10 +55,10 @@ export async function guardarOrdenActividades(idsEnOrden){
   if (conError) throw conError.error;
 }
 
-export async function actualizarActividad(id, { nombre, precio }){
+export async function actualizarActividad(id, { nombre, precio, dias_credito }){
   const { data, error } = await supabase
     .from('actividades')
-    .update({ nombre: nombre.trim(), precio })
+    .update({ nombre: nombre.trim(), precio, dias_credito })
     .eq('id', id)
     .select()
     .single();

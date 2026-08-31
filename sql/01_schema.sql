@@ -11,6 +11,7 @@ create table if not exists actividades (
   id      integer generated always as identity primary key,
   nombre  text   not null unique,
   precio  numeric(12,2) not null default 0,
+  dias_credito integer not null default 30,
 
   -- Orden manual, no alfabético: en AppSheet las actividades están
   -- agrupadas a criterio (variantes de Aparatos, después HIFT
@@ -25,6 +26,7 @@ create table if not exists actividades (
 
 comment on table actividades is 'Catálogo de actividades del gimnasio y su precio vigente.';
 comment on column actividades.orden is 'Orden manual de despliegue (deck de ACTIVIDADES y dropdown del formulario de clientes). No es alfabético.';
+comment on column actividades.dias_credito is 'Duración en días que se copia al cliente al seleccionar esta actividad.';
 
 -- CLIENTES -------------------------------------------------------
 -- Nota sobre tipos: dni y actividad_id son integer, no bigint, a
@@ -70,6 +72,10 @@ create table if not exists clientes (
   -- filtra activo = true.
   activo        boolean not null default true,
 
+  -- Bandera interna enviada por el formulario de edición. Permite
+  -- guardar datos del socio sin crear/corregir un movimiento.
+  registrar_pago boolean not null default true,
+
   creado_en     timestamptz not null default now(),
   actualizado_en timestamptz not null default now()
 );
@@ -78,6 +84,7 @@ comment on table clientes is 'Socios del gimnasio. ESTADO y FECHA HOY no son col
 comment on column clientes.telefono is 'Formato E.164, ej: +5493401234567. Se usa para tel: y wa.me.';
 comment on column clientes.precio is 'Precio pactado con el cliente. Se sugiere desde actividades.precio al elegir la actividad, pero no se recalcula solo.';
 comment on column clientes.fecha_vencimiento is 'fecha_pago + dias_credito. Generada, no editable.';
+comment on column clientes.registrar_pago is 'Bandera interna: el trigger registra historial solamente cuando vale true.';
 
 create index if not exists idx_clientes_actividad on clientes (actividad_id);
 create index if not exists idx_clientes_activo on clientes (activo);

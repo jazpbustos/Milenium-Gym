@@ -39,7 +39,10 @@ assets/
 sql/
   01_schema.sql, 02_vistas.sql, 03_rls.sql, 04_rpc_checkin.sql,
   05_seed_actividades.sql, 06_agregar_orden_actividades.sql,
-  07_historial_pagos.sql    → correr en ese orden, una sola vez
+  07_historial_pagos.sql, 08_dias_credito_actividades.sql,
+  09_pago_unico_cliente_fecha.sql, 10_dni_editable.sql,
+  11_dashboard_estadisticas.sql, 12_edicion_sin_pago.sql
+                            → correr en ese orden, una sola vez
 ```
 
 Ninguna vista llama a Supabase directo: siempre pasa por `api/`. Así, el día que quieras cambiar de backend, tocás dos archivos y no quince.
@@ -61,6 +64,11 @@ En [supabase.com](https://supabase.com), creá un proyecto nuevo (plan gratuito 
 5. `05_seed_actividades.sql` (opcional) — carga actividades de ejemplo
 6. `06_agregar_orden_actividades.sql` — agrega el orden manual si la base ya existía
 7. `07_historial_pagos.sql` — crea el historial y registra automáticamente los pagos nuevos
+8. `08_dias_credito_actividades.sql` — agrega los días de crédito al catálogo de actividades
+9. `09_pago_unico_cliente_fecha.sql` — corrige el movimiento existente al guardar nuevamente el mismo socio y fecha
+10. `10_dni_editable.sql` — permite corregir el DNI conservando el historial del socio
+11. `11_dashboard_estadisticas.sql` — crea los indicadores del tablero de estadísticas
+12. `12_edicion_sin_pago.sql` — permite actualizar datos sin registrar un pago ficticio
 
 ### 3. Crear los usuarios
 

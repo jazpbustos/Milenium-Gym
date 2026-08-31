@@ -29,10 +29,14 @@ import { navegarA } from '../router.js';
 export async function renderClienteForm(container, params, { renderTopbar }){
   const dniEdicion = params.dni ? Number(params.dni) : null;
   const esEdicion = dniEdicion !== null;
-  const clave = esEdicion ? `cliente-editar-${dniEdicion}` : 'cliente-nuevo';
+  const esSoloDatos = esEdicion && params.modo === 'datos';
+  const registrarPago = !esEdicion || !esSoloDatos;
+  const clave = esEdicion
+    ? `cliente-${esSoloDatos ? 'datos' : 'pago'}-${dniEdicion}`
+    : 'cliente-nuevo';
 
   renderTopbar({
-    title: esEdicion ? 'Editar cliente' : 'Nuevo cliente',
+    title: !esEdicion ? 'Nuevo cliente' : (esSoloDatos ? 'Editar datos' : 'Registrar pago'),
     onBack: () => navegarA(esEdicion ? `/cliente/${dniEdicion}` : '/clientes'),
   });
 
@@ -83,39 +87,49 @@ export async function renderClienteForm(container, params, { renderTopbar }){
   const actividadInicial = actividadDesdeBorrador
     || (esEdicion ? actividades.find((a) => a.id === cliente.actividad_id) : null);
 
+  const precioVigente = actividadInicial ? Number(actividadInicial.precio) : null;
+
   // Borrador > dato guardado > default — en ese orden de prioridad.
   const valores = {
-    dni: borrador?.dni ?? (esEdicion ? String(cliente.dni) : ''),
+    dni: esEdicion
+      ? (borrador?.dni || String(cliente.dni))
+      : (borrador?.dni ?? ''),
     nombre: borrador?.nombre ?? (esEdicion ? cliente.nombre : ''),
     telefono: borrador?.telefono ?? (esEdicion ? (cliente.telefono || '') : ''),
-    precio: borrador?.precio ?? (esEdicion ? formatearPrecio(cliente.precio) : ''),
+    // En edición se propone siempre el precio vigente del catálogo. Así un
+    // socio con una cuota histórica no puede guardarse otra vez con el monto
+    // viejo por olvidar volver a elegir la misma actividad.
+    precio: esEdicion
+      ? formatearPrecio(precioVigente ?? cliente.precio)
+      : (borrador?.precio ?? ''),
     comentarios: borrador?.comentarios ?? (esEdicion ? (cliente.comentarios || '') : ''),
     fechaPago: borrador?.fechaPago ?? (esEdicion ? (cliente.fecha_pago || '') : hoyISO()),
-    diasCredito: borrador?.diasCredito ?? (esEdicion ? String(cliente.dias_credito ?? '') : ''),
+    diasCredito: actividadInicial?.dias_credito != null
+      ? String(actividadInicial.dias_credito)
+      : (borrador?.diasCredito ?? (esEdicion ? String(cliente.dias_credito ?? '') : '')),
   };
 
   container.innerHTML = `
     <form id="cliente-form" novalidate class="form-shell">
       <div class="form-shell-fields">
 
-        <div class="form-field">
+        <div class="form-field" ${esEdicion && !esSoloDatos ? 'hidden' : ''}>
           <label for="f-dni">DNI<span class="req">*</span></label>
           <input id="f-dni" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="10" autocomplete="off"
-            value="${esEdicion ? cliente.dni : escapeAttr(valores.dni)}" ${esEdicion ? 'disabled' : ''} required>
-          ${esEdicion ? '<p class="hint">El DNI no se puede modificar. Si está mal, dalo de baja y cargá el cliente de nuevo.</p>' : ''}
+            value="${escapeAttr(valores.dni)}" required>
         </div>
 
-        <div class="form-field">
+        <div class="form-field" ${esEdicion && !esSoloDatos ? 'hidden' : ''}>
           <label for="f-nombre">Nombre<span class="req">*</span></label>
           <input id="f-nombre" type="text" autocomplete="off" value="${escapeAttr(valores.nombre)}" required>
         </div>
 
-        <div class="form-field">
+        <div class="form-field" ${esEdicion && !esSoloDatos ? 'hidden' : ''}>
           <label for="f-telefono">Teléfono<span class="req">*</span></label>
           <input id="f-telefono" type="tel" autocomplete="off" value="${escapeAttr(valores.telefono)}" required>
         </div>
 
-        <div class="form-field">
+        <div class="form-field" ${esSoloDatos ? 'hidden' : ''}>
           <label for="f-actividad-trigger">Actividad<span class="req">*</span></label>
           <button type="button" class="select-trigger" id="f-actividad-trigger">
             <span id="f-actividad-trigger-label" class="${actividadInicial ? '' : 'is-placeholder'}">${actividadInicial ? escapeHtml(actividadInicial.nombre) : 'Elegí una actividad'}</span>
@@ -124,24 +138,24 @@ export async function renderClienteForm(container, params, { renderTopbar }){
           <input type="hidden" id="f-actividad" value="${actividadInicial ? actividadInicial.id : ''}" required>
         </div>
 
-        <div class="form-field precio-field">
+        <div class="form-field precio-field" ${esSoloDatos ? 'hidden' : ''}>
           <label for="f-precio">Precio<span class="req">*</span></label>
           <input id="f-precio" type="text" readonly tabindex="-1" autocomplete="off" value="${escapeAttr(valores.precio)}" required>
         </div>
 
-        <div class="form-field">
+        <div class="form-field" ${esEdicion && !esSoloDatos ? 'hidden' : ''}>
           <label for="f-comentarios">Comentarios</label>
           <input id="f-comentarios" type="text" autocomplete="off" value="${escapeAttr(valores.comentarios)}">
         </div>
 
-        <div class="form-row-2">
+        <div class="form-row-2" ${esSoloDatos ? 'hidden' : ''}>
           <div class="form-field">
             <label for="f-fecha-pago">Fecha de pago<span class="req">*</span></label>
             <input id="f-fecha-pago" type="date" value="${escapeAttr(valores.fechaPago)}" required>
           </div>
           <div class="form-field">
             <label for="f-dias-credito">Días de crédito<span class="req">*</span></label>
-            <input id="f-dias-credito" type="number" min="0" step="1" placeholder="Ej: 30"
+            <input id="f-dias-credito" type="number" min="1" step="1" readonly tabindex="-1"
               value="${escapeAttr(valores.diasCredito)}" required>
           </div>
         </div>
@@ -174,7 +188,7 @@ export async function renderClienteForm(container, params, { renderTopbar }){
   // al cancelar. Así, salir de la vista y volver no pierde nada.
   function guardarBorradorActual(){
     guardarBorrador(clave, {
-      dni: esEdicion ? '' : inpDni.value,
+      dni: inpDni.value,
       nombre: inpNombre.value,
       telefono: inpTelefono.value,
       actividadId: inpActividad.value,
@@ -202,38 +216,49 @@ export async function renderClienteForm(container, params, { renderTopbar }){
   function marcarPrecioSugerido(){
     inpPrecio.classList.remove('is-confirmado');
     inpPrecio.classList.add('is-sugerido');
-    btnGuardar.disabled = true;
+    actualizarEstadoGuardar();
   }
   function marcarPrecioConfirmado(){
     inpPrecio.classList.remove('is-sugerido');
     inpPrecio.classList.add('is-confirmado');
-    btnGuardar.disabled = false;
+    actualizarEstadoGuardar();
+  }
+  function actualizarEstadoGuardar(){
+    btnGuardar.disabled = registrarPago && inpPrecio.classList.contains('is-sugerido');
+    if (inpFechaPago) inpFechaPago.disabled = esSoloDatos;
+    if (triggerActividad) triggerActividad.disabled = esSoloDatos;
   }
 
   if (inpPrecio.value) marcarPrecioSugerido();
 
-  function aplicarActividad(actividad){
+  function aplicarActividad(actividad, { forzarPrecio = false } = {}){
     const cambioDeActividad = !actividadElegida || !actividad || actividadElegida.id !== actividad.id;
     actividadElegida = actividad;
     inpActividad.value = actividad ? actividad.id : '';
     triggerActividadLabel.textContent = actividad ? actividad.nombre : 'Elegí una actividad';
     triggerActividadLabel.classList.toggle('is-placeholder', !actividad);
-    if (actividad && cambioDeActividad){
+    // Elegir explícitamente una actividad desde el popup vuelve a tomar
+    // su precio vigente aunque sea la misma que el cliente ya tenía.
+    if (actividad && (cambioDeActividad || forzarPrecio)){
       inpPrecio.value = formatearPrecio(actividad.precio); // "$42.000"
       marcarPrecioSugerido();
+    }
+    if (actividad){
+      inpDiasCredito.value = actividad.dias_credito;
     }
     guardarBorradorActual(); // el hidden y el precio no disparan 'input' solos
   }
 
   triggerActividad.addEventListener('click', async () => {
     const elegida = await elegirActividad(actividades, actividadElegida?.id ?? null);
-    if (elegida) aplicarActividad(elegida);
+    if (elegida) aplicarActividad(elegida, { forzarPrecio: true });
   });
 
   // Un solo click confirma. El campo es readonly y no seleccionable
   // (ver components.css), así que no hay nada más que pueda pasar:
   // clicks de más, una vez confirmado, no hacen nada.
   inpPrecio.addEventListener('click', () => {
+    if (esSoloDatos) return;
     if (!inpPrecio.classList.contains('is-sugerido')) return;
     marcarPrecioConfirmado();
     inpPrecio.blur();
@@ -249,7 +274,8 @@ export async function renderClienteForm(container, params, { renderTopbar }){
     e.preventDefault();
     limpiarErrores(container);
 
-    const dni = esEdicion ? dniEdicion : Number(inpDni.value);
+    const dniLimpio = inpDni.value.trim();
+    const dni = Number(dniLimpio);
     const nombre = inpNombre.value.trim();
     const telefono = inpTelefono.value.trim();
     const actividadId = Number(inpActividad.value) || null;
@@ -262,17 +288,14 @@ export async function renderClienteForm(container, params, { renderTopbar }){
     let huboError = false;
     const marcar = (el, msg) => { marcarError(el, msg); huboError = true; };
 
-    if (!esEdicion){
-      const dniLimpio = inpDni.value.trim();
-      if (!dniLimpio) marcar(inpDni, 'El DNI es obligatorio.');
-      else if (!/^[0-9]{1,10}$/.test(dniLimpio)) marcar(inpDni, 'Solo números, hasta 10 dígitos.');
-    }
+    if (!dniLimpio) marcar(inpDni, 'El DNI es obligatorio.');
+    else if (!/^[0-9]{1,10}$/.test(dniLimpio)) marcar(inpDni, 'Solo números, hasta 10 dígitos.');
     if (!nombre) marcar(inpNombre, 'El nombre es obligatorio.');
     if (!telefono) marcar(inpTelefono, 'El teléfono es obligatorio.');
-    if (!actividadId) marcar(triggerActividad, 'Elegí una actividad.');
-    if (!inpPrecio.value || !(precio > 0)) marcar(inpPrecio, 'El precio es obligatorio.');
-    if (!fechaPago) marcar(inpFechaPago, 'La fecha de pago es obligatoria.');
-    if (!diasCredito) marcar(inpDiasCredito, 'Los días de crédito son obligatorios.');
+    if (registrarPago && !actividadId) marcar(triggerActividad, 'Elegí una actividad.');
+    if (registrarPago && (!inpPrecio.value || !(precio > 0))) marcar(inpPrecio, 'El precio es obligatorio.');
+    if (registrarPago && !fechaPago) marcar(inpFechaPago, 'La fecha de pago es obligatoria.');
+    if (registrarPago && !diasCredito) marcar(inpDiasCredito, 'Los días de crédito son obligatorios.');
 
     if (huboError){
       mostrarToast('Revisá los campos marcados en rojo.', { error: true });
@@ -294,11 +317,11 @@ export async function renderClienteForm(container, params, { renderTopbar }){
     btnGuardar.textContent = 'Guardando...';
     try {
       if (esEdicion){
-        await actualizarCliente(dniEdicion, payload);
-        mostrarToast('Cliente actualizado.');
+        await actualizarCliente(dniEdicion, payload, { registrarPago });
+        mostrarToast(registrarPago ? 'Pago registrado.' : 'Datos del cliente actualizados.');
       } else {
-        await crearCliente(payload);
-        mostrarToast('Cliente creado.');
+        const resultado = await crearCliente(payload);
+        mostrarToast(resultado.reactivado ? 'Cliente reactivado.' : 'Cliente creado.');
       }
       borrarBorrador(clave);
       setState({ clientes: [] }); // fuerza recarga de la lista con datos frescos
@@ -306,8 +329,8 @@ export async function renderClienteForm(container, params, { renderTopbar }){
     } catch (err) {
       mostrarError(err);
     } finally {
-      btnGuardar.disabled = false;
       btnGuardar.textContent = 'Guardar';
+      actualizarEstadoGuardar();
     }
   });
 }

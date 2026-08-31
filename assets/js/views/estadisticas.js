@@ -7,7 +7,8 @@
 // gráficos para esto.
 // ============================================================
 
-import { listarClientesPorActividad } from '../api/estadisticas.js';
+import { listarClientesPorActividad, obtenerResumenDashboard } from '../api/estadisticas.js';
+import { formatearPrecio } from '../utils/formato.js';
 import { mostrarError } from '../utils/toast.js';
 import { cerrarSesion } from '../auth.js';
 import { navegarA } from '../router.js';
@@ -27,27 +28,51 @@ export async function renderEstadisticas(container, params, { renderTopbar }){
   async function cargar(){
     host.innerHTML = '<div class="loading-bar"></div>';
     try {
-      const datos = await listarClientesPorActividad();
-      pintar(datos.filter((d) => d.cantidad > 0));
+      const [resumen, datos] = await Promise.all([
+        obtenerResumenDashboard(),
+        listarClientesPorActividad(),
+      ]);
+      pintar(resumen, datos.filter((d) => d.cantidad > 0));
     } catch (err) {
       mostrarError(err);
       host.innerHTML = `<div class="estado-vacio"><p>No se pudieron cargar las estadísticas.</p></div>`;
     }
   }
 
-  function pintar(datos){
-    if (!datos.length){
-      host.innerHTML = `<div class="estado-vacio"><p>Todavía no hay clientes cargados para graficar.</p></div>`;
-      return;
-    }
+  function pintar(resumen, datos){
     host.innerHTML = `
-      <p class="stats-title">Clientes por actividad</p>
-      <div class="stats-legend"><span class="swatch"></span> Cantidad de clientes</div>
-      <div class="stats-chart-wrap">${construirBarChart(datos)}</div>
+      <section class="dashboard-section" aria-labelledby="dashboard-title">
+        <p class="stats-title" id="dashboard-title">Resumen del mes</p>
+        <div class="dashboard-grid">
+          ${tarjeta('Socios activos', resumen.sociosActivos, 'is-positive')}
+          ${tarjeta('Por vencer', resumen.cuotasPorVencer, 'is-warning', 'Próximos 3 días')}
+          ${tarjeta('Vencidos', resumen.sociosVencidos, 'is-danger', 'Últimos 2 meses')}
+          ${tarjeta('Ingresos del mes', formatearPrecio(resumen.ingresosMes), 'is-money')}
+          ${tarjeta('Nuevos clientes', resumen.nuevosSociosMes, '', 'Último mes')}
+        </div>
+      </section>
+
+      <section class="stats-activity-section" aria-labelledby="activity-title">
+        <p class="stats-title" id="activity-title">Socios por actividad</p>
+        ${datos.length ? `
+          <div class="stats-legend"><span class="swatch"></span> Cantidad de socios activos</div>
+          <div class="stats-chart-wrap">${construirBarChart(datos)}</div>
+        ` : '<p class="stats-empty">Todavía no hay socios activos para graficar.</p>'}
+      </section>
     `;
   }
 
   await cargar();
+}
+
+function tarjeta(label, valor, clase = '', detalle = ''){
+  return `
+    <article class="dashboard-card ${clase}">
+      <p class="dashboard-card-label">${label}</p>
+      <p class="dashboard-card-value">${valor}</p>
+      ${detalle ? `<p class="dashboard-card-detail">${detalle}</p>` : ''}
+    </article>
+  `;
 }
 
 function construirBarChart(datos){

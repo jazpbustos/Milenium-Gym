@@ -20,7 +20,7 @@
 import { listarActividades, crearActividad, actualizarActividad } from '../api/actividades.js';
 import { precioParaInput } from '../utils/formato.js';
 import { mostrarError, mostrarToast } from '../utils/toast.js';
-import { soloDecimal, marcarError, limpiarErrores } from '../utils/validacion.js';
+import { soloDecimal, soloDigitos, marcarError, limpiarErrores } from '../utils/validacion.js';
 import { getState, setState, guardarBorrador, obtenerBorrador, borrarBorrador } from '../state.js';
 import { navegarA } from '../router.js';
 
@@ -61,6 +61,7 @@ export async function renderActividadForm(container, params, { renderTopbar }){
   const valores = {
     nombre: borrador?.nombre ?? (esEdicion ? actividad.nombre : ''),
     precio: borrador?.precio ?? (esEdicion ? precioParaInput(actividad.precio) : ''),
+    diasCredito: borrador?.diasCredito ?? (esEdicion ? String(actividad.dias_credito) : '30'),
   };
 
   container.innerHTML = `
@@ -78,6 +79,12 @@ export async function renderActividadForm(container, params, { renderTopbar }){
             value="${escapeAttr(valores.precio)}" required>
         </div>
 
+        <div class="form-field">
+          <label for="f-dias-credito">Días de crédito<span class="req">*</span></label>
+          <input id="f-dias-credito" type="number" inputmode="numeric" min="1" step="1"
+            value="${escapeAttr(valores.diasCredito)}" required>
+        </div>
+
       </div>
 
       <div class="form-actions-bar">
@@ -90,6 +97,7 @@ export async function renderActividadForm(container, params, { renderTopbar }){
   const form = container.querySelector('#actividad-form');
   const inpNombre = container.querySelector('#f-nombre');
   const inpPrecio = container.querySelector('#f-precio');
+  const inpDiasCredito = container.querySelector('#f-dias-credito');
   const btnGuardar = container.querySelector('#btn-guardar');
 
   // --- Borrador: se guarda en cada cambio, se borra al guardar o
@@ -98,12 +106,14 @@ export async function renderActividadForm(container, params, { renderTopbar }){
     guardarBorrador(clave, {
       nombre: inpNombre.value,
       precio: inpPrecio.value,
+      diasCredito: inpDiasCredito.value,
     });
   }
   form.addEventListener('input', guardarBorradorActual);
 
   // --- Saneo de campos mientras se tipea ------------------------
   inpPrecio.addEventListener('input', () => { inpPrecio.value = soloDecimal(inpPrecio.value); });
+  inpDiasCredito.addEventListener('input', () => { inpDiasCredito.value = soloDigitos(inpDiasCredito.value); });
 
   container.querySelector('#btn-cancelar').addEventListener('click', () => {
     borrarBorrador(clave);
@@ -116,12 +126,14 @@ export async function renderActividadForm(container, params, { renderTopbar }){
 
     const nombre = inpNombre.value.trim();
     const precio = Number(inpPrecio.value);
+    const diasCredito = Number(inpDiasCredito.value);
 
     let huboError = false;
     const marcar = (el, msg) => { marcarError(el, msg); huboError = true; };
 
     if (!nombre) marcar(inpNombre, 'El nombre es obligatorio.');
     if (!inpPrecio.value || !(precio > 0)) marcar(inpPrecio, 'El precio es obligatorio.');
+    if (!Number.isInteger(diasCredito) || diasCredito < 1) marcar(inpDiasCredito, 'Ingresá al menos 1 día.');
 
     if (huboError){
       mostrarToast('Revisá los campos marcados en rojo.', { error: true });
@@ -132,10 +144,10 @@ export async function renderActividadForm(container, params, { renderTopbar }){
     btnGuardar.textContent = 'Guardando...';
     try {
       if (esEdicion){
-        await actualizarActividad(idEdicion, { nombre, precio });
+        await actualizarActividad(idEdicion, { nombre, precio, dias_credito: diasCredito });
         mostrarToast('Actividad actualizada.');
       } else {
-        await crearActividad({ nombre, precio });
+        await crearActividad({ nombre, precio, dias_credito: diasCredito });
         mostrarToast('Actividad creada.');
       }
       borrarBorrador(clave);

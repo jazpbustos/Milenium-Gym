@@ -7,19 +7,19 @@
    ============================================================ */
 
 :root{
-  /* --- superficies (estética AppSheet: negro real, no gris) --- */
-  --bg:            #0a0a0a;
-  --surface:       #141210;   /* topbar, bottomnav, cards, filas de tabla */
-  --surface-2:     #1b1815;   /* hover / fila alternada */
-  --surface-3:     #221e19;   /* hover sobre surface-2 */
-  --field-bg:      #1d1d1d;   /* fondo de inputs/selects de formulario — gris neutro, igual que AppSheet */
-  --line:          #2a2420;   /* separadores */
-  --line-strong:   #3a332c;
+  /* --- superficies neutras, como la app anterior --- */
+  --bg:            #0d0d0d;
+  --surface:       #1d1d1d;   /* topbar, bottomnav, cards, filas de tabla */
+  --surface-2:     #242424;   /* hover / fila alternada */
+  --surface-3:     #2b2b2b;   /* hover sobre surface-2 */
+  --field-bg:      #202020;
+  --line:          #353535;
+  --line-strong:   #5a5d61;
 
   /* --- texto --- */
-  --text:          #f5f3ee;
-  --text-dim:      #b9b3a6;
-  --text-faint:    #7d7568;
+  --text:          #f5f5f5;
+  --text-dim:      #c2c2c2;
+  --text-faint:    #8b8b8b;
 
   /* --- naranja Milenium: reemplaza el amarillo de AppSheet --- */
   --naranja:        #e07830;
@@ -50,10 +50,10 @@
   --sp-8:  32px;
   --sp-10: 40px;
 
-  /* --- radios y sombra --- */
-  --radius-sm:  6px;
-  --radius:     10px;
-  --radius-lg:  16px;
+  /* --- geometría recta, como la app anterior --- */
+  --radius-sm:  0;
+  --radius:     0;
+  --radius-lg:  0;
   --shadow:     0 6px 20px rgba(0,0,0,.35);
 
   /* --- métricas de layout compartidas por JS y CSS --- */

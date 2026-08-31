@@ -11,20 +11,22 @@ import { navegarA } from '../router.js';
 export function renderLogin(container){
   container.innerHTML = `
     <div class="login-screen">
-      <img class="login-logo" src="assets/img/logomile.jpg" alt="Milenium Centro de Entrenamiento">
-      <p class="login-title">Panel de Gestión</p>
-      <form class="login-form" id="login-form" novalidate>
-        <div class="form-field">
-          <label for="login-email">Email</label>
-          <input id="login-email" type="email" autocomplete="username" required>
-        </div>
-        <div class="form-field">
-          <label for="login-pass">Contraseña</label>
-          <input id="login-pass" type="password" autocomplete="current-password" required>
-        </div>
-        <p class="login-error" id="login-error" role="alert"></p>
-        <button type="submit" class="btn btn-primary btn-block" id="login-submit">Ingresar</button>
-      </form>
+      <section class="login-panel" aria-labelledby="login-title">
+        <img class="login-logo" src="assets/img/logomile.jpg" alt="Milenium Centro de Entrenamiento">
+        <p class="login-title" id="login-title">Panel de Gestión</p>
+        <form class="login-form" id="login-form" novalidate>
+          <div class="form-field">
+            <label for="login-email">Email</label>
+            <input id="login-email" type="email" autocomplete="username" required>
+          </div>
+          <div class="form-field">
+            <label for="login-pass">Contraseña</label>
+            <input id="login-pass" type="password" autocomplete="current-password" required>
+          </div>
+          <p class="login-error" id="login-error" role="alert"></p>
+          <button type="submit" class="btn btn-primary btn-block" id="login-submit">Ingresar</button>
+        </form>
+      </section>
     </div>
   `;
 

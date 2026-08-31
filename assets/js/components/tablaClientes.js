@@ -55,12 +55,18 @@ export function renderTablaClientes(container, clientes, { origen }){
   setState({ listContext: { dnis: ordenados.map((c) => c.dni), origen } });
 
   container.innerHTML = `
-    <div class="tabla-wrap">
-      <table class="tabla">
+    <div class="tabla-wrap tabla-clientes-wrap">
+      <table class="tabla tabla-clientes">
+        <colgroup>
+          <col class="col-ancho-dni">
+          <col class="col-ancho-nombre">
+          <col class="col-ancho-estado">
+          <col class="col-ancho-chevron">
+        </colgroup>
         <thead>
           <tr>
             ${COLUMNAS.map((col) => `
-              <th class="is-sortable ${col.campo === campoOrden ? `is-orden-activo ${dir === -1 ? 'is-orden-desc' : ''}` : ''}" data-campo="${col.campo}">
+              <th class="col-head-${col.campo} is-sortable ${col.campo === campoOrden ? `is-orden-activo ${dir === -1 ? 'is-orden-desc' : ''}` : ''}" data-campo="${col.campo}">
                 ${col.label}${icon('chevronDown').replace('<svg ', '<svg class="sort-arrow" ')}
               </th>
             `).join('')}

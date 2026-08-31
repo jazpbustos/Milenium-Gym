@@ -39,3 +39,9 @@ insert into actividades (nombre, precio) values
   ('CrossFit Kids x2',                             19000.00),
   ('Pase Libre (apa todos los días + x5 clases cross)', 55000.00)
 on conflict (nombre) do nothing;
+
+-- Duraciones cortas; las demás actividades usan el default de 30 días.
+update actividades set dias_credito = 1  where lower(nombre) like '1 día %';
+update actividades set dias_credito = 7  where lower(nombre) like '1 semana %';
+update actividades set dias_credito = 15 where lower(nombre) like '2 semanas %';
+update actividades set dias_credito = 21 where lower(nombre) like '3 semanas %';

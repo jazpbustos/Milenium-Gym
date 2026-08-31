@@ -21,7 +21,7 @@ export function elegirActividad(actividades, actividadActualId){
             <button type="button" class="picker-item${a.id === actividadActualId ? ' is-selected' : ''}" data-id="${a.id}">
               <span class="picker-item-radio"></span>
               <span class="picker-item-nombre">${escapeHtml(a.nombre)}</span>
-              <span class="picker-item-precio">${formatearPrecio(a.precio)}</span>
+              <span class="picker-item-precio">${formatearPrecio(a.precio)} · ${a.dias_credito}d</span>
             </button>
           `).join('')}
         </div>

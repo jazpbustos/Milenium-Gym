@@ -56,7 +56,7 @@ export async function renderActividades(container, params, { renderTopbar }){
         <div class="deck-row-drag" title="Arrastrar para reordenar">${icon('arrastrar')}</div>
         <div class="deck-row-main">
           <p class="deck-row-title">${escapeHtml(a.nombre)}</p>
-          <p class="deck-row-sub">${formatearPrecio(a.precio)}</p>
+          <p class="deck-row-sub">${formatearPrecio(a.precio)} · ${a.dias_credito} día${a.dias_credito === 1 ? '' : 's'}</p>
         </div>
         <div class="deck-row-actions">
           <button type="button" class="icon-btn btn-editar" title="Editar">${icon('lapiz')}</button>

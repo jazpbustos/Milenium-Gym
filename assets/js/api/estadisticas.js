@@ -6,6 +6,21 @@
 
 import { supabase } from '../supabaseClient.js';
 
+export async function obtenerResumenDashboard(){
+  const { data, error } = await supabase
+    .from('v_dashboard_estadisticas')
+    .select('socios_activos, cuotas_por_vencer, socios_vencidos, nuevos_socios_mes, ingresos_mes')
+    .single();
+  if (error) throw error;
+  return {
+    sociosActivos: Number(data.socios_activos),
+    cuotasPorVencer: Number(data.cuotas_por_vencer),
+    sociosVencidos: Number(data.socios_vencidos),
+    nuevosSociosMes: Number(data.nuevos_socios_mes),
+    ingresosMes: Number(data.ingresos_mes),
+  };
+}
+
 export async function listarClientesPorActividad(){
   const { data, error } = await supabase
     .from('v_estadisticas_actividad')

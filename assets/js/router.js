@@ -35,7 +35,9 @@ const rutas = [
   { patron: '/estadisticas',         render: renderEstadisticas, tab: 'estadisticas',    nav: true,  topbar: true  },
   { patron: '/cliente/nuevo',        render: renderClienteForm,  tab: null,              nav: false, topbar: true  },
   { patron: '/cliente/:dni',         render: renderClienteDetail,tab: null,              nav: false, topbar: true  },
-  { patron: '/cliente/:dni/editar',  render: renderClienteForm,  tab: null,              nav: false, topbar: true  },
+  { patron: '/cliente/:dni/datos',   render: (c, p, ctx) => renderClienteForm(c, { ...p, modo: 'datos' }, ctx), tab: null, nav: false, topbar: true },
+  { patron: '/cliente/:dni/pago',    render: (c, p, ctx) => renderClienteForm(c, { ...p, modo: 'pago' }, ctx),  tab: null, nav: false, topbar: true },
+  { patron: '/cliente/:dni/editar',  render: (c, p, ctx) => renderClienteForm(c, { ...p, modo: 'pago' }, ctx),  tab: null, nav: false, topbar: true },
   { patron: '/actividad/nueva',      render: renderActividadForm,tab: null,              nav: false, topbar: true  },
   { patron: '/actividad/:id/editar', render: renderActividadForm,tab: null,              nav: false, topbar: true  },
 ];

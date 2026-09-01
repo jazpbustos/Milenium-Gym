@@ -44,9 +44,10 @@ export async function renderEstadisticas(container, params, { renderTopbar }){
       <section class="dashboard-section" aria-labelledby="dashboard-title">
         <p class="stats-title" id="dashboard-title">Resumen del mes</p>
         <div class="dashboard-grid">
-          ${tarjeta('Socios activos', resumen.sociosActivos, 'is-positive')}
+          ${tarjeta('Socios activos', resumen.sociosActivos, 'is-highlight', 'Total con cuota vigente')}
+          ${tarjeta('Socios al día', resumen.sociosAlDia, 'is-positive', 'Más de 3 días restantes')}
           ${tarjeta('Por vencer', resumen.cuotasPorVencer, 'is-warning', 'Próximos 3 días')}
-          ${tarjeta('Vencidos', resumen.sociosVencidos, 'is-danger', 'Últimos 2 meses')}
+          ${tarjeta('Vencidos', resumen.sociosVencidos, 'is-danger', 'Últimos 30 días')}
           ${tarjeta('Ingresos del mes', formatearPrecio(resumen.ingresosMes), 'is-money')}
           ${tarjeta('Nuevos clientes', resumen.nuevosSociosMes, '', 'Último mes')}
         </div>

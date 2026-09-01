@@ -88,6 +88,9 @@ export async function renderClienteForm(container, params, { renderTopbar }){
     || (esEdicion ? actividades.find((a) => a.id === cliente.actividad_id) : null);
 
   const precioVigente = actividadInicial ? Number(actividadInicial.precio) : null;
+  const transferenciaInicial = Boolean(
+    borrador?.transferencia && actividadInicial && esActividadAparatos(actividadInicial)
+  );
 
   // Borrador > dato guardado > default — en ese orden de prioridad.
   const valores = {
@@ -100,8 +103,10 @@ export async function renderClienteForm(container, params, { renderTopbar }){
     // socio con una cuota histórica no puede guardarse otra vez con el monto
     // viejo por olvidar volver a elegir la misma actividad.
     precio: esEdicion
-      ? formatearPrecio(precioVigente ?? cliente.precio)
-      : (borrador?.precio ?? ''),
+      ? formatearPrecio(calcularPrecio(precioVigente ?? cliente.precio, transferenciaInicial))
+      : (actividadInicial
+          ? formatearPrecio(calcularPrecio(precioVigente, transferenciaInicial))
+          : (borrador?.precio ?? '')),
     comentarios: borrador?.comentarios ?? (esEdicion ? (cliente.comentarios || '') : ''),
     fechaPago: borrador?.fechaPago ?? (esEdicion ? (cliente.fecha_pago || '') : hoyISO()),
     diasCredito: actividadInicial?.dias_credito != null
@@ -141,6 +146,10 @@ export async function renderClienteForm(container, params, { renderTopbar }){
         <div class="form-field precio-field" ${esSoloDatos ? 'hidden' : ''}>
           <label for="f-precio">Precio<span class="req">*</span></label>
           <input id="f-precio" type="text" readonly tabindex="-1" autocomplete="off" value="${escapeAttr(valores.precio)}" required>
+          <label class="transferencia-check" id="transferencia-check" ${actividadInicial && esActividadAparatos(actividadInicial) ? '' : 'hidden'}>
+            <input id="f-transferencia" type="checkbox" ${transferenciaInicial ? 'checked' : ''}>
+            <span>Pago con transferencia (+10%)</span>
+          </label>
         </div>
 
         <div class="form-field" ${esEdicion && !esSoloDatos ? 'hidden' : ''}>
@@ -176,6 +185,8 @@ export async function renderClienteForm(container, params, { renderTopbar }){
   const triggerActividad = container.querySelector('#f-actividad-trigger');
   const triggerActividadLabel = container.querySelector('#f-actividad-trigger-label');
   const inpPrecio = container.querySelector('#f-precio');
+  const checkTransferencia = container.querySelector('#f-transferencia');
+  const transferenciaHost = container.querySelector('#transferencia-check');
   const inpTelefono = container.querySelector('#f-telefono');
   const inpComentarios = container.querySelector('#f-comentarios');
   const inpFechaPago = container.querySelector('#f-fecha-pago');
@@ -193,6 +204,7 @@ export async function renderClienteForm(container, params, { renderTopbar }){
       telefono: inpTelefono.value,
       actividadId: inpActividad.value,
       precio: inpPrecio.value,
+      transferencia: checkTransferencia.checked,
       comentarios: inpComentarios.value,
       fechaPago: inpFechaPago.value,
       diasCredito: inpDiasCredito.value,
@@ -234,13 +246,16 @@ export async function renderClienteForm(container, params, { renderTopbar }){
   function aplicarActividad(actividad, { forzarPrecio = false } = {}){
     const cambioDeActividad = !actividadElegida || !actividad || actividadElegida.id !== actividad.id;
     actividadElegida = actividad;
+    const admiteTransferencia = actividad && esActividadAparatos(actividad);
+    if (cambioDeActividad || !admiteTransferencia) checkTransferencia.checked = false;
+    transferenciaHost.hidden = !admiteTransferencia;
     inpActividad.value = actividad ? actividad.id : '';
     triggerActividadLabel.textContent = actividad ? actividad.nombre : 'Elegí una actividad';
     triggerActividadLabel.classList.toggle('is-placeholder', !actividad);
     // Elegir explícitamente una actividad desde el popup vuelve a tomar
     // su precio vigente aunque sea la misma que el cliente ya tenía.
     if (actividad && (cambioDeActividad || forzarPrecio)){
-      inpPrecio.value = formatearPrecio(actividad.precio); // "$42.000"
+      inpPrecio.value = formatearPrecio(calcularPrecio(actividad.precio, checkTransferencia.checked));
       marcarPrecioSugerido();
     }
     if (actividad){
@@ -262,6 +277,15 @@ export async function renderClienteForm(container, params, { renderTopbar }){
     if (!inpPrecio.classList.contains('is-sugerido')) return;
     marcarPrecioConfirmado();
     inpPrecio.blur();
+    guardarBorradorActual();
+  });
+
+  checkTransferencia.addEventListener('change', () => {
+    if (!actividadElegida || !esActividadAparatos(actividadElegida)) return;
+    inpPrecio.value = formatearPrecio(
+      calcularPrecio(actividadElegida.precio, checkTransferencia.checked)
+    );
+    marcarPrecioSugerido();
     guardarBorradorActual();
   });
 
@@ -342,4 +366,13 @@ function escapeHtml(str){
 }
 function escapeAttr(str){
   return escapeHtml(str).replace(/"/g, '&quot;');
+}
+
+function esActividadAparatos(actividad){
+  return actividad?.nombre?.toLocaleLowerCase('es-AR').includes('aparatos');
+}
+
+function calcularPrecio(precioBase, conTransferencia){
+  const base = Number(precioBase) || 0;
+  return conTransferencia ? Math.round(base * 1.10) : base;
 }

@@ -221,6 +221,7 @@ table.tabla tbody tr{
 }
 table.tabla tbody tr:hover{ background: var(--surface-2); }
 .movimientos-tabla tbody tr{ cursor: default; }
+.movimientos-tabla tbody tr.is-clickable{ cursor: pointer; }
 table.tabla tbody td{
   padding: var(--sp-3) var(--sp-4);
   font-size: 15px;
@@ -498,6 +499,28 @@ table.tabla tfoot td{
   text-align: center;
   font-weight: 700;
   cursor: default;
+}
+
+.precio-field .transferencia-check{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  margin-top: 8px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+}
+.precio-field .transferencia-check[hidden]{ display: none; }
+.precio-field .transferencia-check input{
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--naranja);
+  cursor: pointer;
 }
 
 .form-actions-bar{

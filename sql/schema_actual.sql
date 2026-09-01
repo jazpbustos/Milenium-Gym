@@ -231,20 +231,22 @@ with limites as (
 )
 select
   (select count(*) from public.clientes, limites
-    where activo = true and fecha_vencimiento > limites.hoy) as socios_activos,
+    where activo = true and fecha_vencimiento >= limites.hoy) as socios_activos,
   (select count(*) from public.clientes cross join limites
     where activo = true
       and fecha_vencimiento between limites.hoy and limites.hoy + 3) as cuotas_por_vencer,
   (select count(*) from public.clientes cross join limites
     where activo = true
-      and fecha_vencimiento between limites.hoy - 60 and limites.hoy - 30) as socios_vencidos,
+      and fecha_vencimiento between limites.hoy - 30 and limites.hoy - 1) as socios_vencidos,
   (select count(*) from public.clientes cross join limites
     where creado_en at time zone 'America/Argentina/Buenos_Aires' >=
         greatest(limites.inicio_mes, limites.inicio_altas_reales)
       and creado_en at time zone 'America/Argentina/Buenos_Aires' < limites.fin_mes) as nuevos_socios_mes,
   (select coalesce(sum(importe), 0) from public.pagos cross join limites
     where creado_en at time zone 'America/Argentina/Buenos_Aires' >= limites.inicio_mes
-      and creado_en at time zone 'America/Argentina/Buenos_Aires' < limites.fin_mes) as ingresos_mes;
+      and creado_en at time zone 'America/Argentina/Buenos_Aires' < limites.fin_mes) as ingresos_mes,
+  (select count(*) from public.clientes, limites
+    where activo = true and fecha_vencimiento > limites.hoy + 3) as socios_al_dia;
 
 -- CHECK-IN ------------------------------------------------------------------
 

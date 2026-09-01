@@ -75,20 +75,23 @@ export async function renderMovimientos(container, params, { renderTopbar }){
     const visibles = q
       ? pagos.filter((p) => p.cliente.toLowerCase().includes(q) || String(p.cliente_dni).includes(q))
       : pagos;
-    const total = visibles.reduce((suma, p) => suma + Number(p.importe), 0);
 
     if (!visibles.length){
       host.innerHTML = `<div class="estado-vacio"><p>No hay movimientos para mostrar.</p></div>`;
       return;
     }
 
+    const dnisConDetalle = [...new Set(
+      visibles.map((p) => p.cliente_dni_actual).filter((dni) => dni != null)
+    )];
+    setState({ listContext: { dnis: dnisConDetalle, origen: 'movimientos' } });
+
     host.innerHTML = `
-      <div class="movimientos-resumen"><strong>${visibles.length} pago${visibles.length === 1 ? '' : 's'}</strong><span>${formatearPrecio(total)}</span></div>
       <div class="tabla-wrap">
         <table class="tabla movimientos-tabla">
           <thead><tr><th>Fecha</th><th>Socio</th><th>Actividad</th><th>Importe</th><th>Nuevo vencimiento</th></tr></thead>
           <tbody>${visibles.map((p) => `
-            <tr>
+            <tr ${p.cliente_dni_actual != null ? `class="is-clickable" data-dni="${p.cliente_dni_actual}"` : ''}>
               <td>${formatearFecha(p.fecha_pago)}</td>
               <td class="col-nombre">${escapeHtml(p.cliente)}</td>
               <td>${escapeHtml(p.actividad)}</td>
@@ -97,6 +100,10 @@ export async function renderMovimientos(container, params, { renderTopbar }){
             </tr>`).join('')}</tbody>
         </table>
       </div>`;
+
+    host.querySelectorAll('tbody tr.is-clickable').forEach((tr) => {
+      tr.addEventListener('click', () => navegarA(`/cliente/${tr.dataset.dni}`));
+    });
   }
 
   async function cargar(){

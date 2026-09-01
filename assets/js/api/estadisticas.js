@@ -9,11 +9,12 @@ import { supabase } from '../supabaseClient.js';
 export async function obtenerResumenDashboard(){
   const { data, error } = await supabase
     .from('v_dashboard_estadisticas')
-    .select('socios_activos, cuotas_por_vencer, socios_vencidos, nuevos_socios_mes, ingresos_mes')
+    .select('socios_activos, socios_al_dia, cuotas_por_vencer, socios_vencidos, nuevos_socios_mes, ingresos_mes')
     .single();
   if (error) throw error;
   return {
     sociosActivos: Number(data.socios_activos),
+    sociosAlDia: Number(data.socios_al_dia),
     cuotasPorVencer: Number(data.cuotas_por_vencer),
     sociosVencidos: Number(data.socios_vencidos),
     nuevosSociosMes: Number(data.nuevos_socios_mes),

@@ -1,124 +1,73 @@
-# Milenium Gym — Gestión
+# Milenium Gym — Sistema de gestión
 
-App de gestión de clientes para **Milenium Centro de Entrenamiento**. Incluye socios, historial de movimientos, actividades y estadísticas, con Supabase como base y HTML/CSS/JS plano — sin build, sin framework.
+Sistema administrativo para la operación diaria de **Milenium Centro de Entrenamiento**. Centraliza socios, actividades, cuotas, vencimientos, movimientos de pago e indicadores operativos en una única fuente de datos compartida con el sistema de check-in.
 
-Comparte base de datos con [Check-in-Milenium](../Check-in-Milenium): las dos apps leen y escriben la misma fuente en Supabase, así que un pago cargado acá se ve al instante en la tablet de la entrada.
+## Alcance funcional
 
-## Cómo está armado
+La aplicación permite administrar el ciclo completo de una cuota: alta del socio, selección de actividad, registro del pago, cálculo del vencimiento, seguimiento del estado y conservación del movimiento histórico.
 
-Sin bundler ni npm: el navegador importa los módulos ES directo (`<script type="module">`). Cada archivo hace una sola cosa:
+El sistema está orientado al uso cotidiano desde computadoras, tablets y teléfonos. La información se actualiza contra la base central y utiliza el día calendario de Argentina para calcular estados y períodos.
 
-```
-assets/
-  css/
-    tokens.css       → paleta, tipografía, espaciado (todo sale de acá)
-    base.css         → reset
-    layout.css       → topbar / bottomnav / login
-    components.css   → botones, FAB, tabla, deck, formulario, toast
-    views.css        → detalles puntuales (gráfico, modal de confirmación)
-  js/
-    config.js          → URL y anon key de Supabase, constantes compartidas
-    supabaseClient.js  → instancia única del cliente
-    auth.js             → login / logout / sesión
-    state.js            → store mínimo (sesión, cache y filtros)
-    router.js            → ruteo por hash, sin librería
-    main.js               → arranque
-    api/
-      clientes.js       → toda la lectura/escritura de CLIENTES
-      pagos.js          → lectura del historial de PAGOS
-      actividades.js    → toda la lectura/escritura de ACTIVIDADES
-      estadisticas.js   → conteo de clientes por actividad
-    components/
-      topbar.js, bottomnav.js, icons.js, tablaClientes.js
-    views/
-      login.js, clientesList.js, movimientos.js, clienteDetail.js,
-      clienteForm.js, actividades.js, estadisticas.js
-    utils/
-      formato.js (fechas/precio/estado), telefono.js, whatsapp.js,
-      toast.js, confirm.js
-sql/
-  schema_actual.sql         → estructura consolidada, sin datos
-  README.md                 → reglas para cambios nuevos
-```
+## Socios
 
-Ninguna vista llama a Supabase directo: siempre pasa por `api/`. Así, el día que quieras cambiar de backend, tocás dos archivos y no quince.
+Cada socio posee una identidad interna permanente y un DNI único editable. La ficha contiene nombre, teléfono, actividad, precio, comentarios, fecha de pago, duración de la cuota y vencimiento calculado.
 
-## Puesta en marcha
+La lista permite buscar, ordenar y filtrar por:
 
-### 1. Crear el proyecto en Supabase
+- **Activos:** más de tres días restantes de cuota.
+- **Por vencer:** vencimiento entre hoy y los próximos tres días.
+- **Vencidos:** cuota fuera de vigencia.
+- **Todos:** totalidad de socios visibles.
 
-En [supabase.com](https://supabase.com), creá un proyecto nuevo (plan gratuito alcanza para empezar).
+Los datos personales pueden corregirse sin generar un pago. Registrar una cuota es una operación separada y crea o actualiza el movimiento correspondiente.
 
-### 2. Correr el SQL
+Eliminar un socio lo archiva y libera su DNI para una nueva alta. Su historial previo permanece vinculado a su identidad interna y no se transfiere a otra persona que reutilice ese DNI.
 
-Para una base completamente nueva, ejecutá `sql/schema_actual.sql`. No lo ejecutes sobre producción: esa base ya tiene la estructura aplicada. Las reglas para cambios futuros están en [`sql/README.md`](sql/README.md).
+## Actividades y precios
 
-### 3. Crear los usuarios
+El catálogo de actividades define nombre, precio vigente, duración en días y orden de presentación.
 
-`Authentication → Users → Add user`, uno para vos y uno para el dueño del gym. Con email + contraseña alcanza. **No hay pantalla de registro** en la app a propósito: así nadie más se puede crear una cuenta sola.
+Al registrar una cuota, la actividad seleccionada aporta automáticamente su precio y duración. En actividades cuyo nombre contiene **Aparatos**, puede indicarse pago por transferencia, aplicando un recargo del 10 % sobre el precio base.
 
-### 4. Configurar la app
+Los cambios futuros en el catálogo no alteran movimientos anteriores: cada pago conserva el importe y la actividad registrados en ese momento.
 
-Abrí `assets/js/config.js` y completá:
+## Movimientos
 
-```js
-export const SUPABASE_URL = 'https://tu-proyecto.supabase.co';
-export const SUPABASE_ANON_KEY = 'tu-anon-key';
-```
+Movimientos funciona como historial cronológico de pagos. Las filas se ordenan por el momento en que fueron registradas y pueden filtrarse por hoy, últimos siete días, mes calendario o historial completo.
 
-Las dos las encontrás en `Project Settings → API` de tu proyecto de Supabase. La anon key es pública por diseño — lo que protege los datos es RLS (paso 2.3), no ocultar esta clave.
+Cada movimiento conserva:
 
-### 5. Correrla
+- Identidad interna y DNI histórico del socio.
+- Nombre del socio al momento del pago.
+- Actividad e importe registrados.
+- Fecha de pago y días de crédito.
+- Nuevo vencimiento.
+- Fecha y hora de creación y última corrección.
 
-Como usa `<script type="module">`, **no la abras con doble clic** (el navegador bloquea los imports por CORS cuando el archivo se abre como `file://`). Serví la carpeta con cualquier servidor local, por ejemplo:
+Cuando el socio continúa activo, el movimiento permite abrir su ficha. Si fue eliminado, el movimiento permanece visible pero no enlaza a una persona nueva que pueda haber reutilizado el DNI.
 
-```bash
-# con Python (ya viene instalado en la mayoría de los sistemas)
-python -m http.server 8080
+## Estadísticas
 
-# o con Node
-npx serve .
-```
+El tablero se calcula en tiempo real desde socios y movimientos:
 
-Y abrís `http://localhost:8080`.
+- **Socios activos:** total de cuotas vigentes, incluyendo las que vencen hoy.
+- **Socios al día:** cuotas con más de tres días restantes.
+- **Por vencer:** cuotas que vencen entre hoy y los próximos tres días.
+- **Vencidos:** cuotas vencidas durante los últimos 30 días.
+- **Nuevos clientes:** altas realizadas dentro del mes calendario actual, excluyendo la migración inicial.
+- **Ingresos del mes:** suma de movimientos registrados durante el mes calendario actual.
+- **Socios por actividad:** distribución de socios con cuota vigente según su actividad.
 
-### 6. Deploy
+Los grupos **Socios al día** y **Por vencer** son excluyentes y, sumados, componen el total de **Socios activos**. Todos los indicadores cambian automáticamente con el paso de los días y al registrar o corregir pagos.
 
-Sin build, cualquier hosting estático sirve: [Netlify](https://netlify.com) (arrastrar la carpeta) o GitHub Pages (activarlo en la configuración del repo). No hace falta configurar nada especial — es HTML/CSS/JS plano.
+## Check-in
 
-## Conectar el check-in
+El sistema comparte la base con **Check-in Milenium**. La consulta por DNI expone únicamente el nombre, la fecha de pago y el vencimiento necesarios para informar si la cuota está activa.
 
-El check-in consulta la función `buscar_socio` incluida en `sql/schema_actual.sql`:
+Los cambios realizados en la administración quedan disponibles para el check-in sin duplicar información ni mantener planillas paralelas.
 
-```js
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+## Integridad y acceso
 
-const { data, error } = await supabase.rpc('buscar_socio', { p_dni: Number(dni) });
-// data es un array; data[0] trae { nombre, fecha_pago, fecha_vencimiento }
-```
+El acceso administrativo requiere una sesión autenticada. La información de clientes, actividades y pagos está protegida por políticas de acceso en la base.
 
-El resto del archivo (cálculo de días, colores, auto-reset) no cambia.
-
-## Decisiones que vale la pena conocer
-
-- **El precio se guarda en cada cliente**, no se recalcula solo contra `actividades.precio`. Al elegir la actividad en el formulario, el precio se autocompleta como sugerencia (`views/clienteForm.js`); en cuanto tocás el campo, deja de pisarse. Así un precio pactado con un socio no se borra si después le cambiás la actividad.
-- **ESTADO no es una columna**: se calcula en la vista `v_clientes` contra la fecha de hoy en cada consulta (`sql/schema_actual.sql`). Guardarlo como columna lo dejaría congelado en la fecha en que se escribió.
-- **Eliminar archiva y libera el DNI**: el cliente deja de aparecer en Socios y su DNI se puede reutilizar. La fila interna permanece asociada a sus pagos mediante `cliente_id`, por lo que el historial no se mezcla ni se borra.
-- **Las deudas se consultan dentro de Socios**: el filtro `Con deuda` muestra `estado < 0`, y la tabla conserva el orden ascendente/descendente habitual.
-- **Los pagos tienen historial propio**: `pagos` conserva importe, actividad, crédito y vencimiento de cada movimiento. `clientes.fecha_pago` sigue guardando el último pago para que ESTADO y el check-in sean rápidos.
-
-## Favicon
-
-El ícono de pestaña no es la foto del logo (un wordmark de 512×159 no se lee en 16px) — es una mancuerna generada por `scripts/make_favicon.py` con Pillow, fondo naranja y trazo oscuro, mismo lenguaje visual que el ícono de la pestaña "Milenium Gym" del bottom nav. Si en algún momento cambia el naranja de marca, se regenera con:
-
-```bash
-pip install pillow --break-system-packages
-python3 scripts/make_favicon.py
-```
-
-## Pendientes conocidos
-
-- Backup: el plan gratuito de Supabase no tiene point-in-time recovery. Conviene un export periódico a CSV hasta que se pase a un plan pago.
-- El umbral de "por vencer" (3 días) está en `config.js`, alineado con el mismo umbral del check-in — si lo cambiás, cambialo en los dos lados.
-- La normalización de teléfono es una heurística (`utils/telefono.js`): el código de área argentino tiene largo variable, así que ante la duda te muestra el resultado para que lo confirmes, no lo fuerza en silencio.
+El historial se relaciona mediante identificadores internos, mientras que nombres, actividades, DNI e importes quedan registrados como datos históricos del movimiento. Esta separación permite editar o archivar socios sin perder trazabilidad ni mezclar pagos entre personas.

@@ -86,11 +86,11 @@ export async function renderClienteDetail(container, params, { renderTopbar }){
     <div class="detail-field">
       <p class="detail-field-label">Teléfono</p>
       <p class="detail-field-value">
-        <span>${formatearVisual(cliente.telefono)}</span>
+        <span>${escapeHtml(formatearVisual(cliente.telefono))}</span>
         ${cliente.telefono ? `
           <span class="value-actions">
-            <a class="icon-btn is-call" href="${telHref(cliente.telefono)}" title="Llamar">${icon('telefono')}</a>
-            <a class="icon-btn is-whatsapp" href="${waHref(cliente.telefono, mensajeRecordatorio(cliente.nombre))}" target="_blank" rel="noopener" title="WhatsApp">${icon('whatsapp')}</a>
+            <a class="icon-btn is-call" href="${escapeAttr(telHref(cliente.telefono))}" title="Llamar">${icon('telefono')}</a>
+            <a class="icon-btn is-whatsapp" href="${escapeAttr(waHref(cliente.telefono, mensajeRecordatorio(cliente.nombre)))}" target="_blank" rel="noopener" title="WhatsApp">${icon('whatsapp')}</a>
           </span>` : ''}
       </p>
     </div>
@@ -151,4 +151,7 @@ function escapeHtml(str){
   const d = document.createElement('div');
   d.textContent = str ?? '';
   return d.innerHTML;
+}
+function escapeAttr(str){
+  return escapeHtml(str).replace(/"/g, '&quot;');
 }

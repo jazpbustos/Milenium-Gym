@@ -427,28 +427,52 @@ $$;
 revoke all on function public.buscar_socio(integer) from public;
 grant execute on function public.buscar_socio(integer) to anon, authenticated;
 
+-- ADMINISTRADORES -----------------------------------------------------------
+-- Solo los usuarios de esta tabla ven y modifican datos (ver políticas
+-- abajo). Con RLS activo y sin políticas, la tabla es invisible desde la
+-- API. Se carga a mano desde el SQL Editor:
+--   insert into public.administradores (user_id, email)
+--   select id, email from auth.users where email = 'mail@ejemplo.com';
+-- Además, en Supabase → Authentication conviene tener desactivado
+-- "Allow new users to sign up".
+
+create table public.administradores (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  email text,
+  creado_en timestamptz not null default now()
+);
+
+create function public.es_admin()
+returns boolean
+language sql
+security definer
+stable
+set search_path = public
+as $$
+  select exists (select 1 from public.administradores where user_id = auth.uid());
+$$;
+
+revoke all on function public.es_admin() from public, anon;
+grant execute on function public.es_admin() to authenticated;
+
 -- SEGURIDAD -----------------------------------------------------------------
 
 alter table public.actividades enable row level security;
 alter table public.clientes enable row level security;
 alter table public.pagos enable row level security;
+alter table public.administradores enable row level security;
 
-create policy "actividades: acceso total autenticado"
+create policy "actividades: solo administradores"
   on public.actividades for all to authenticated
-  using (true) with check (true);
+  using (public.es_admin()) with check (public.es_admin());
 
-create policy "clientes: acceso total autenticado"
+create policy "clientes: solo administradores"
   on public.clientes for all to authenticated
-  using (true) with check (true);
+  using (public.es_admin()) with check (public.es_admin());
 
-create policy "pagos: lectura autenticada"
-  on public.pagos for select to authenticated using (true);
-create policy "pagos: alta autenticada"
-  on public.pagos for insert to authenticated with check (true);
-create policy "pagos: correccion autenticada"
-  on public.pagos for update to authenticated using (true) with check (true);
-create policy "pagos: baja autenticada"
-  on public.pagos for delete to authenticated using (true);
+create policy "pagos: solo administradores"
+  on public.pagos for all to authenticated
+  using (public.es_admin()) with check (public.es_admin());
 
 revoke all on function public.aplicar_ficha_sin_movimiento(uuid, date, integer, integer, numeric) from public, anon;
 revoke all on function public.corregir_pago(bigint, date, integer, numeric, integer) from public, anon;

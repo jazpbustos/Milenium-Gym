@@ -60,6 +60,12 @@ El tablero se calcula en tiempo real desde socios y movimientos:
 
 Los grupos **Socios al día** y **Por vencer** son excluyentes y, sumados, componen el total de **Socios activos**. Todos los indicadores cambian automáticamente con el paso de los días y al registrar o corregir pagos.
 
+## Correcciones y respaldo
+
+Desde Movimientos se puede corregir o eliminar un pago. La ficha del socio solo cambia cuando se toca su pago vigente; al eliminarlo, vuelve al estado anterior a ese pago.
+
+Estadísticas incluye la descarga de una copia de seguridad completa en formato JSON. El aviso se pone en rojo cuando pasa un mes desde el último backup descargado en esa computadora.
+
 ## Check-in
 
 El sistema comparte la base con **Check-in Milenium**. La consulta por DNI expone únicamente el nombre, la fecha de pago y el vencimiento necesarios para informar si la cuota está activa.
@@ -68,6 +74,6 @@ Los cambios realizados en la administración quedan disponibles para el check-in
 
 ## Integridad y acceso
 
-El acceso administrativo requiere una sesión autenticada. La información de clientes, actividades y pagos está protegida por políticas de acceso en la base.
+El acceso administrativo requiere una sesión autenticada de una cuenta registrada en la tabla de administradores. La información de clientes, actividades y pagos está protegida por políticas de acceso en la base que exigen esa condición, por lo que una cuenta nueva ajena al gimnasio no puede ver ni modificar datos.
 
 El historial se relaciona mediante identificadores internos, mientras que nombres, actividades, DNI e importes quedan registrados como datos históricos del movimiento. Esta separación permite editar o archivar socios sin perder trazabilidad ni mezclar pagos entre personas.

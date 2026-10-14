@@ -9,15 +9,20 @@
   margin: var(--sp-5) var(--sp-5) 0;
   padding: var(--sp-4);
   background: var(--surface);
-  border-left: 3px solid var(--line-strong);
+  border-left: 3px solid var(--verde);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-4);
   flex-wrap: wrap;
 }
-.backup-section.is-atrasado{ border-color: var(--amarillo); }
-.backup-section .stats-title{ margin-bottom: var(--sp-1); }
+.backup-section.is-atrasado{
+  border-color: var(--rojo);
+  background: color-mix(in srgb, var(--rojo) 12%, var(--surface));
+}
+.backup-section.is-atrasado .backup-texto{ color: var(--rojo); }
+.backup-section .stats-title{ margin-bottom: 0; }
+.backup-section.is-atrasado .stats-title{ margin-bottom: var(--sp-1); }
 .backup-texto{ color: var(--text-dim); font-size: 14px; }
 .backup-section .btn{ flex: none; }
 .backup-section .btn svg{ width: 18px; height: 18px; }

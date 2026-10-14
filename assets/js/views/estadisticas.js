@@ -32,21 +32,21 @@ export async function renderEstadisticas(container, params, { renderTopbar }){
   const backupHost = container.querySelector('#backup-section');
 
   // --- Copia de seguridad -----------------------------------------
-  const DIAS_AVISO_BACKUP = 7;
+  // Aviso solo cuando pasó un mes (o nunca se hizo) desde esta compu.
+  const DIAS_AVISO_BACKUP = 30;
   function pintarBackup(){
     const ultimo = ultimoBackup();
     const dias = ultimo ? Math.floor((Date.now() - ultimo.getTime()) / 86400000) : null;
     const atrasado = dias === null || dias >= DIAS_AVISO_BACKUP;
-    const texto = ultimo
-      ? `Último backup desde esta computadora: ${ultimo.toLocaleDateString('es-AR')} (${dias === 0 ? 'hoy' : dias === 1 ? 'ayer' : `hace ${dias} días`}).`
-      : 'Todavía no se hizo ningún backup desde esta computadora.';
+    const aviso = !atrasado ? ''
+      : (ultimo ? 'Ya pasó un mes desde el último backup.' : 'Todavía no se descargó ningún backup.');
     backupHost.className = 'backup-section' + (atrasado ? ' is-atrasado' : '');
     backupHost.innerHTML = `
       <div class="backup-info">
         <p class="stats-title">Copia de seguridad</p>
-        <p class="backup-texto">${texto}${atrasado ? ' Conviene hacer uno (al menos una vez por semana).' : ''}</p>
+        ${aviso ? `<p class="backup-texto">${aviso}</p>` : ''}
       </div>
-      <button type="button" class="btn ${atrasado ? 'btn-primary' : 'btn-ghost'}" id="btn-backup">${icon('descargar')}<span>Descargar backup</span></button>
+      <button type="button" class="btn ${atrasado ? 'btn-danger' : 'btn-ghost'}" id="btn-backup">${icon('descargar')}<span>Descargar backup</span></button>
     `;
     const btn = backupHost.querySelector('#btn-backup');
     btn.addEventListener('click', async () => {
@@ -154,7 +154,7 @@ function construirBarChart(datos){
       </rect>
       <text class="bar-value" x="${labelX}" y="${y - 6}" text-anchor="middle">${d.cantidad}</text>
       <text class="axis-label" x="0" y="0" text-anchor="end"
-        transform="translate(${labelX}, ${labelY}) rotate(-40)">${truncar(d.actividad, 22)}</text>
+        transform="translate(${labelX}, ${labelY}) rotate(-40)">${escapeXml(truncar(d.actividad, 22))}</text>
     `;
   }).join('');
 

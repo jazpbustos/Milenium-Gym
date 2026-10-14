@@ -6,6 +6,7 @@
 // ============================================================
 
 import { supabase } from '../supabaseClient.js';
+import { hoyISO } from '../utils/formato.js';
 
 const COLUMNAS_VISTA = 'dni, nombre, telefono, actividad_id, actividad, precio, comentarios, fecha_pago, dias_credito, fecha_vencimiento, estado, activo';
 
@@ -95,7 +96,9 @@ export async function actualizarCliente(dni, payload, { registrarPago = true } =
 // Atajo para la acción más frecuente del día a día: marcar que
 // el socio pagó hoy, sin abrir el resto del formulario.
 export async function registrarPagoHoy(dni){
-  const hoy = new Date().toISOString().slice(0, 10);
+  // hoyISO() usa el día local; toISOString() da el día en UTC y
+  // después de las 21 h de Argentina ya marcaba "mañana".
+  const hoy = hoyISO();
   const { data, error } = await supabase
     .from('clientes')
     .update({ fecha_pago: hoy })

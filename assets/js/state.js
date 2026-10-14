@@ -8,6 +8,7 @@ const state = {
   session: null,        // sesión de Supabase Auth, o null
   actividades: [],       // cache de la tabla ACTIVIDADES
   clientes: [],          // cache de v_clientes (se refresca al entrar a cada vista)
+  clientesCargadosEn: 0, // Date.now() de la última carga de `clientes`
   listContext: {          // para las flechas prev/next del detalle
     dnis: [],
     origen: 'clientes',   // 'clientes' | 'movimientos'

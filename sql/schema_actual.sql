@@ -44,6 +44,12 @@ create table public.pagos (
   importe numeric(12,2) not null,
   dias_credito integer not null,
   nuevo_vencimiento date generated always as (fecha_pago + dias_credito) stored,
+  -- Cómo estaba la ficha del socio justo antes de este pago. Permite
+  -- deshacerlo al borrarlo (ver eliminar_pago).
+  ant_fecha_pago date,
+  ant_dias_credito integer,
+  ant_actividad_id integer references public.actividades(id) on delete restrict,
+  ant_precio numeric(12,2),
   creado_en timestamptz not null default now(),
   actualizado_en timestamptz not null default now()
 );
@@ -129,18 +135,39 @@ create trigger trg_completar_pago_cliente_id
   before insert or update of cliente_id, actividad_id on public.pagos
   for each row execute function public.completar_pago_cliente_id();
 
+-- Genera el movimiento cuando cambia la cuota de la ficha. Se saltea si
+-- la ficha se está actualizando desde una corrección de pagos
+-- (milenium.resincronizando = 'on', ver aplicar_ficha_sin_movimiento).
 create function public.registrar_movimiento_pago()
 returns trigger
 language plpgsql
 security invoker
 set search_path = public
 as $$
+declare
+  v_ant_fecha date;
+  v_ant_dias integer;
+  v_ant_actividad integer;
+  v_ant_precio numeric(12,2);
 begin
+  if coalesce(current_setting('milenium.resincronizando', true), '') = 'on' then
+    return new;
+  end if;
+
+  if tg_op = 'UPDATE' then
+    v_ant_fecha := old.fecha_pago;
+    v_ant_dias := old.dias_credito;
+    v_ant_actividad := old.actividad_id;
+    v_ant_precio := old.precio;
+  end if;
+
   if new.fecha_pago is not null then
     insert into public.pagos (
-      cliente_id, cliente_dni, actividad_id, fecha_pago, importe, dias_credito
+      cliente_id, cliente_dni, actividad_id, fecha_pago, importe, dias_credito,
+      ant_fecha_pago, ant_dias_credito, ant_actividad_id, ant_precio
     ) values (
-      new.id, new.dni, new.actividad_id, new.fecha_pago, new.precio, new.dias_credito
+      new.id, new.dni, new.actividad_id, new.fecha_pago, new.precio, new.dias_credito,
+      v_ant_fecha, v_ant_dias, v_ant_actividad, v_ant_precio
     )
     on conflict (cliente_id, fecha_pago) do update set
       cliente_dni = excluded.cliente_dni,
@@ -158,6 +185,141 @@ create trigger trg_registrar_movimiento_pago
   after insert or update of fecha_pago, actividad_id, precio, dias_credito
   on public.clientes
   for each row execute function public.registrar_movimiento_pago();
+
+-- CORRECCIÓN DE PAGOS --------------------------------------------------------
+-- La ficha solo cambia si se corrige o borra el pago vigente (el que
+-- tiene la misma fecha que la ficha). Borrar el vigente devuelve la ficha
+-- a como estaba antes de ese pago.
+
+-- Aplica valores a la ficha sin que el trigger genere un movimiento.
+create function public.aplicar_ficha_sin_movimiento(
+  p_cliente_id uuid, p_fecha date, p_dias integer, p_actividad_id integer, p_precio numeric
+)
+returns void
+language plpgsql
+security invoker
+set search_path = public
+as $$
+begin
+  perform set_config('milenium.resincronizando', 'on', true);
+  update public.clientes
+     set fecha_pago   = p_fecha,
+         dias_credito = coalesce(p_dias, dias_credito),
+         actividad_id = coalesce(p_actividad_id, actividad_id),
+         precio       = coalesce(p_precio, precio)
+   where id = p_cliente_id;
+  perform set_config('milenium.resincronizando', 'off', true);
+end;
+$$;
+
+create function public.corregir_pago(
+  p_id bigint,
+  p_fecha_pago date,
+  p_actividad_id integer,
+  p_importe numeric,
+  p_dias_credito integer
+)
+returns void
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  v_viejo public.pagos%rowtype;
+  v_ficha_fecha date;
+begin
+  if p_fecha_pago is null or p_actividad_id is null
+     or p_importe is null or p_importe <= 0
+     or p_dias_credito is null or p_dias_credito < 1 then
+    raise exception 'Datos del pago incompletos o inválidos.';
+  end if;
+
+  select * into v_viejo from public.pagos where id = p_id;
+  if not found then
+    raise exception 'No existe el pago indicado.';
+  end if;
+  select fecha_pago into v_ficha_fecha from public.clientes where id = v_viejo.cliente_id;
+
+  update public.pagos
+     set fecha_pago   = p_fecha_pago,
+         actividad_id = p_actividad_id,
+         importe      = p_importe,
+         dias_credito = p_dias_credito
+   where id = p_id;
+
+  -- Los pagos que recordaban a este como "ficha anterior" quedan al día.
+  update public.pagos
+     set ant_fecha_pago   = p_fecha_pago,
+         ant_dias_credito = p_dias_credito,
+         ant_actividad_id = p_actividad_id,
+         ant_precio       = p_importe
+   where cliente_id = v_viejo.cliente_id
+     and id <> p_id
+     and ant_fecha_pago = v_viejo.fecha_pago;
+
+  if v_ficha_fecha = v_viejo.fecha_pago then
+    perform public.aplicar_ficha_sin_movimiento(
+      v_viejo.cliente_id, p_fecha_pago, p_dias_credito, p_actividad_id, p_importe);
+  end if;
+end;
+$$;
+
+-- Devuelve: 'no_vigente' | 'restaurado' | 'sin_dato'
+create function public.eliminar_pago(p_id bigint)
+returns text
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  v_pago public.pagos%rowtype;
+  v_ult public.pagos%rowtype;
+  v_ficha_fecha date;
+begin
+  select * into v_pago from public.pagos where id = p_id;
+  if not found then
+    raise exception 'No existe el pago indicado.';
+  end if;
+  select fecha_pago into v_ficha_fecha from public.clientes where id = v_pago.cliente_id;
+
+  -- Mantener la cadena: quien recordaba a este pago, hereda su anterior.
+  update public.pagos
+     set ant_fecha_pago   = v_pago.ant_fecha_pago,
+         ant_dias_credito = v_pago.ant_dias_credito,
+         ant_actividad_id = v_pago.ant_actividad_id,
+         ant_precio       = v_pago.ant_precio
+   where cliente_id = v_pago.cliente_id
+     and id <> p_id
+     and ant_fecha_pago = v_pago.fecha_pago;
+
+  delete from public.pagos where id = p_id;
+
+  if v_ficha_fecha is distinct from v_pago.fecha_pago then
+    return 'no_vigente';
+  end if;
+
+  if v_pago.ant_fecha_pago is not null then
+    perform public.aplicar_ficha_sin_movimiento(
+      v_pago.cliente_id, v_pago.ant_fecha_pago, v_pago.ant_dias_credito,
+      v_pago.ant_actividad_id, v_pago.ant_precio);
+    return 'restaurado';
+  end if;
+
+  select * into v_ult
+  from public.pagos
+  where cliente_id = v_pago.cliente_id
+  order by fecha_pago desc, creado_en desc, id desc
+  limit 1;
+  if found then
+    perform public.aplicar_ficha_sin_movimiento(
+      v_pago.cliente_id, v_ult.fecha_pago, v_ult.dias_credito,
+      v_ult.actividad_id, v_ult.importe);
+    return 'restaurado';
+  end if;
+
+  return 'sin_dato';
+end;
+$$;
 
 -- VISTAS --------------------------------------------------------------------
 
@@ -285,5 +447,14 @@ create policy "pagos: alta autenticada"
   on public.pagos for insert to authenticated with check (true);
 create policy "pagos: correccion autenticada"
   on public.pagos for update to authenticated using (true) with check (true);
+create policy "pagos: baja autenticada"
+  on public.pagos for delete to authenticated using (true);
+
+revoke all on function public.aplicar_ficha_sin_movimiento(uuid, date, integer, integer, numeric) from public, anon;
+revoke all on function public.corregir_pago(bigint, date, integer, numeric, integer) from public, anon;
+revoke all on function public.eliminar_pago(bigint) from public, anon;
+grant execute on function public.aplicar_ficha_sin_movimiento(uuid, date, integer, integer, numeric) to authenticated;
+grant execute on function public.corregir_pago(bigint, date, integer, numeric, integer) to authenticated;
+grant execute on function public.eliminar_pago(bigint) to authenticated;
 
 commit;

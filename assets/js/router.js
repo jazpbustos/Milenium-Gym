@@ -25,6 +25,13 @@ const bottomnavRoot = document.getElementById('bottomnav');
 
 let cleanupActual = null;
 
+// Número de navegación. Cada resolver() toma uno nuevo; si una vista
+// termina de cargar (await a Supabase) cuando ya se navegó a otra,
+// su resultado se descarta. Sin esto, una vista vieja y lenta podía
+// pintar SU topbar encima de la pantalla nueva (ej: volver a Socios y
+// quedarse con la barra de "Detalle", sin buscador).
+let navActual = 0;
+
 // Cada ruta: patrón con :params, tab activo (o null si no aplica),
 // y la función de render de la vista.
 const rutas = [
@@ -71,6 +78,8 @@ export function navegarA(path){
 }
 
 async function resolver(){
+  const miNav = ++navActual;
+  const esVigente = () => miNav === navActual;
   const match = matchRuta(window.location.hash);
   const { session } = getState();
 
@@ -102,10 +111,20 @@ async function resolver(){
   contenedor.className = 'view';
   viewRoot.appendChild(contenedor);
 
+  const ctx = {
+    renderTopbar: (opts) => { if (esVigente()) renderTopbar(topbarRoot, opts); },
+    esVigente,
+  };
+
   try {
-    const resultado = await ruta.render(contenedor, params, { renderTopbar: (opts) => renderTopbar(topbarRoot, opts) });
+    const resultado = await ruta.render(contenedor, params, ctx);
+    if (!esVigente()){
+      if (typeof resultado === 'function') { try { resultado(); } catch (_e) { /* no-op */ } }
+      return;
+    }
     if (typeof resultado === 'function') cleanupActual = resultado;
   } catch (err) {
+    if (!esVigente()) return;
     console.error('Error renderizando vista', ruta.patron, err);
     contenedor.innerHTML = `<div class="estado-vacio"><p>Ocurrió un error cargando esta pantalla. Probá recargar.</p></div>`;
   }

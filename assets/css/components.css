@@ -222,6 +222,10 @@ table.tabla tbody tr{
 table.tabla tbody tr:hover{ background: var(--surface-2); }
 .movimientos-tabla tbody tr{ cursor: default; }
 .movimientos-tabla tbody tr.is-clickable{ cursor: pointer; }
+.movimientos-tabla .col-acciones{ width: 88px; padding-left: 0; padding-right: var(--sp-2); text-align: right; }
+.movimientos-tabla td.col-acciones{ padding-top: 0; padding-bottom: 0; }
+.movimientos-tabla td.col-acciones .icon-btn{ width: 34px; height: 34px; }
+.movimientos-tabla td.col-acciones .icon-btn svg{ width: 17px; height: 17px; }
 table.tabla tbody td{
   padding: var(--sp-3) var(--sp-4);
   font-size: 15px;
@@ -723,3 +727,9 @@ table.tabla tfoot td{
 @media (max-width: 480px){
   .detail-nav-arrow{ display: none; } /* en mobile se navega con back, no con flechas laterales */
 }
+
+/* ---------- editor de pago (Movimientos → lápiz) ---------- */
+.editor-pago-card{ max-height: 92vh; overflow-y: auto; }
+.editor-pago-card > p{ margin-bottom: var(--sp-4); }
+.editor-pago-ayuda{ font-size: 12.5px; color: var(--text-faint); }
+.editor-pago-card p.editor-pago-error{ color: var(--rojo); font-size: 13.5px; margin-bottom: var(--sp-3); }

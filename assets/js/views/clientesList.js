@@ -14,6 +14,8 @@ import { setState, getState } from '../state.js';
 import { navegarA } from '../router.js';
 import { UMBRAL_POR_VENCER_DIAS } from '../config.js';
 
+const CACHE_CLIENTES_MS = 5 * 60 * 1000;
+
 export async function renderClientesList(container, params, { renderTopbar }){
   // El texto buscado vive en el state global (ver state.js), no acá
   // — así, si la persona sale de esta vista y vuelve, lo encuentra
@@ -89,16 +91,26 @@ export async function renderClientesList(container, params, { renderTopbar }){
   container.querySelector('#fab-nuevo').addEventListener('click', () => navegarA('/cliente/nuevo'));
 
   async function cargar(forzar = false){
-    if (!forzar && getState().clientes.length){
+    const { clientes: enMemoria, clientesCargadosEn } = getState();
+    const hayCache = enMemoria.length > 0;
+    // Con la pestaña abierta todo el día, la lista en memoria se pone
+    // vieja (el estado "vence en X días" se calcula al traerla). Si
+    // tiene más de unos minutos, se muestra igual al toque y se
+    // actualiza por detrás.
+    const cacheFresco = hayCache && (Date.now() - (clientesCargadosEn || 0)) < CACHE_CLIENTES_MS;
+    if (!forzar && cacheFresco){
       aplicarFiltro(textoBusqueda);
       return;
     }
-    tablaHost.innerHTML = '<div class="loading-bar"></div>';
+    if (hayCache && !forzar) aplicarFiltro(textoBusqueda);
+    else tablaHost.innerHTML = '<div class="loading-bar"></div>';
     try {
       const clientes = await listarClientes();
-      setState({ clientes });
+      setState({ clientes, clientesCargadosEn: Date.now() });
+      if (!tablaHost.isConnected) return; // ya se navegó a otra pantalla
       aplicarFiltro(textoBusqueda);
     } catch (err) {
+      if (!tablaHost.isConnected) return;
       mostrarError(err);
       tablaHost.innerHTML = `<div class="estado-vacio"><p>No se pudo cargar la lista de clientes.</p></div>`;
     }

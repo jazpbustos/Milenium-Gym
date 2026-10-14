@@ -21,7 +21,8 @@ import { obtenerCliente, crearCliente, actualizarCliente } from '../api/clientes
 import { icon } from '../components/icons.js';
 import { elegirActividad } from '../components/pickerActividad.js';
 import { mostrarError, mostrarToast } from '../utils/toast.js';
-import { hoyISO, formatearPrecio } from '../utils/formato.js';
+import { hoyISO, formatearPrecio, formatearFecha } from '../utils/formato.js';
+import { pedirConfirmacion } from '../utils/confirm.js';
 import { soloDigitos, soloTexto, soloTelefono, marcarError, limpiarErrores } from '../utils/validacion.js';
 import { getState, setState, guardarBorrador, obtenerBorrador, borrarBorrador } from '../state.js';
 import { navegarA } from '../router.js';
@@ -108,6 +109,9 @@ export async function renderClienteForm(container, params, { renderTopbar }){
           ? formatearPrecio(calcularPrecio(precioVigente, transferenciaInicial))
           : (borrador?.precio ?? '')),
     comentarios: borrador?.comentarios ?? (esEdicion ? (cliente.comentarios || '') : ''),
+    // En edición se muestra la fecha del último pago tal cual está. Para
+    // no duplicar movimientos por olvidar cambiarla, al guardar con esa
+    // misma fecha se pide confirmación (ver submit).
     fechaPago: borrador?.fechaPago ?? (esEdicion ? (cliente.fecha_pago || '') : hoyISO()),
     diasCredito: actividadInicial?.dias_credito != null
       ? String(actividadInicial.dias_credito)
@@ -324,6 +328,18 @@ export async function renderClienteForm(container, params, { renderTopbar }){
     if (huboError){
       mostrarToast('Revisá los campos marcados en rojo.', { error: true });
       return;
+    }
+
+    // Red de seguridad: registrar un pago con la MISMA fecha que el
+    // último casi siempre es un error (se olvidó cambiar la fecha).
+    if (esEdicion && registrarPago && cliente.fecha_pago && fechaPago === cliente.fecha_pago){
+      const seguir = await pedirConfirmacion({
+        titulo: 'Misma fecha que el último pago',
+        mensaje: `El último pago de ${cliente.nombre} ya es del ${formatearFecha(fechaPago)}. ¿Querés guardarlo igual con esa fecha?`,
+        textoConfirmar: 'Guardar igual',
+        peligroso: false,
+      });
+      if (!seguir) return;
     }
 
     const payload = {

@@ -8,8 +8,10 @@
 // ============================================================
 
 import { listarClientesPorActividad, obtenerResumenDashboard } from '../api/estadisticas.js';
+import { descargarBackup, ultimoBackup } from '../api/backup.js';
+import { icon } from '../components/icons.js';
 import { formatearPrecio } from '../utils/formato.js';
-import { mostrarError } from '../utils/toast.js';
+import { mostrarError, mostrarToast } from '../utils/toast.js';
 import { cerrarSesion } from '../auth.js';
 import { navegarA } from '../router.js';
 
@@ -22,8 +24,46 @@ export async function renderEstadisticas(container, params, { renderTopbar }){
     ],
   });
 
-  container.innerHTML = `<div class="stats-view"><div class="loading-bar"></div></div>`;
+  container.innerHTML = `
+    <section class="backup-section" id="backup-section"></section>
+    <div class="stats-view"><div class="loading-bar"></div></div>
+  `;
   const host = container.querySelector('.stats-view');
+  const backupHost = container.querySelector('#backup-section');
+
+  // --- Copia de seguridad -----------------------------------------
+  const DIAS_AVISO_BACKUP = 7;
+  function pintarBackup(){
+    const ultimo = ultimoBackup();
+    const dias = ultimo ? Math.floor((Date.now() - ultimo.getTime()) / 86400000) : null;
+    const atrasado = dias === null || dias >= DIAS_AVISO_BACKUP;
+    const texto = ultimo
+      ? `Último backup desde esta computadora: ${ultimo.toLocaleDateString('es-AR')} (${dias === 0 ? 'hoy' : dias === 1 ? 'ayer' : `hace ${dias} días`}).`
+      : 'Todavía no se hizo ningún backup desde esta computadora.';
+    backupHost.className = 'backup-section' + (atrasado ? ' is-atrasado' : '');
+    backupHost.innerHTML = `
+      <div class="backup-info">
+        <p class="stats-title">Copia de seguridad</p>
+        <p class="backup-texto">${texto}${atrasado ? ' Conviene hacer uno (al menos una vez por semana).' : ''}</p>
+      </div>
+      <button type="button" class="btn ${atrasado ? 'btn-primary' : 'btn-ghost'}" id="btn-backup">${icon('descargar')}<span>Descargar backup</span></button>
+    `;
+    const btn = backupHost.querySelector('#btn-backup');
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      btn.querySelector('span').textContent = 'Preparando...';
+      try {
+        const c = await descargarBackup();
+        mostrarToast(`Backup descargado: ${c.clientes} socios, ${c.pagos} pagos, ${c.actividades} actividades.`);
+        pintarBackup();
+      } catch (err) {
+        mostrarError(err);
+        btn.disabled = false;
+        btn.querySelector('span').textContent = 'Descargar backup';
+      }
+    });
+  }
+  pintarBackup();
 
   async function cargar(){
     host.innerHTML = '<div class="loading-bar"></div>';

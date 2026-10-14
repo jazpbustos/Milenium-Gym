@@ -5,6 +5,26 @@
    ============================================================ */
 
 /* ---------- ESTADISTICAS ---------- */
+.backup-section{
+  margin: var(--sp-5) var(--sp-5) 0;
+  padding: var(--sp-4);
+  background: var(--surface);
+  border-left: 3px solid var(--line-strong);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+.backup-section.is-atrasado{ border-color: var(--amarillo); }
+.backup-section .stats-title{ margin-bottom: var(--sp-1); }
+.backup-texto{ color: var(--text-dim); font-size: 14px; }
+.backup-section .btn{ flex: none; }
+.backup-section .btn svg{ width: 18px; height: 18px; }
+@media (max-width: 620px){
+  .backup-section{ margin: var(--sp-4) var(--sp-4) 0; }
+  .backup-section .btn{ width: 100%; }
+}
 .stats-view{ padding: var(--sp-5); }
 .dashboard-section{ margin-bottom: var(--sp-8); }
 .dashboard-grid{

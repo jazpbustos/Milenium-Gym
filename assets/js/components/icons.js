@@ -49,6 +49,8 @@ export const iconos = {
 
   chevronDown: () => base('<path d="M6 9l6 6 6-6"/>'),
 
+  descargar: () => base('<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>'),
+
   calendario: () => base('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/>'),
 };
 
